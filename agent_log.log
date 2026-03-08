@@ -1,8 +1,8 @@
 
 ===============================================================================================
-🚀 NEW AGENT SESSION | User: расскажи за перпарат виртуоз
+🚀 NEW AGENT SESSION | User: подбери фунгициды против гельминтоспориоза
 📊 MODEL: gemini-3.1-flash-lite
-📊 CONTEXT INFO: Messages=2, System Prompt=10465 chars
+📊 CONTEXT INFO: Messages=2, System Prompt=10692 chars
 --- SYSTEM PROMPT START ---
 You are a high-performance Autonomous AI Agent. Your primary goal is to provide factually accurate and verified information by orchestrating local database queries and global web searches.
 
@@ -141,9 +141,10 @@ You MUST use 'web-search' for ALL queries involving:
    - <i>Разделяйте культуры пустой строкой.</i>
 
 3. **📦 Рекомендации для ротации и аналоги:**
+   - Если в базе найдено много препаратов, покажите 3-5 ЛУЧШИХ ПРИМЕРОВ.
    - Каждое наименование должно содержать все данные:
      🔹 [Название] | [Фирма] | [ДВ+Конц] | до <code>[Дата окончания регистрации]</code>
-   - В конце укажите: "🔎 Всего найдено <b>X</b> подходящих решений."
+   - **ОБЯЗАТЕЛЬНАЯ ФРАЗА В КОНЦЕ СПИСКА:** "🔎 <b>Внимание:</b> Это лишь примеры. Всего в реестре найдено <b>[Общее количество]</b> препаратов, подходящих под ваш запрос." (Укажите точное число, полученное через COUNT(*)).
 
 ### 🤝 INTERACTIVITY & NEXT STEPS:
 End with 1-2 brief "Интерактивных предложения":
@@ -173,46 +174,72 @@ OPERATIONAL RULES:
 ===============================================================================================
 
 [STEP 1] Requesting LiteLLM (gemini-3.1-flash-lite)...
-⏱️ Response received in 2.24s
-DEBUG: Full response object: ModelResponse(id='rtutaZf_CvTMkdUPpvTIiAY', created=1773001643, model='gemini-3.1-flash-lite', object='chat.completion', system_fingerprint=None, choices=[Choices(finish_reason='stop', index=0, message=Message(content='!@!{"tool": "postgresql", "query": "SELECT p.naimenovanie, p.registrant, p.deystvuyushchee_veshchestvo, p.status, p.srok_reg, pp.kultura, pp.vrednyy_obekt, pp.norma, pp.osobennosti FROM reestr.pestitsidy p LEFT JOIN reestr.pestitsidy_primeneniya pp ON p.nomer_reg = pp.nomer_reg WHERE p.naimenovanie ILIKE \'%Виртуоз%\' AND p.status = \'Действует\'"}!@!\n!@!{"tool": "web-search", "query": "препарат Виртуоз действующие вещества FRAC группа"}!@!', role='assistant', tool_calls=None, function_call=None, images=[], thinking_blocks=[], provider_specific_fields={'thought_signatures': ['EtQDCtEDAb4+9vuacyFvwx+VhnJxI7zA5wQU3ynrT316ITyT4QHN/ZaqBr101XOKvBFfkKRmi8SeYiBzbdkXy8xV/7jGmvMK9s5O5anBboHME2k0WCNAP5MflnkKoXI4COXsNPWS0RJMTYjX/Q3haZpP6xVGg5Oj6zH5JY/qLE3uEHcKOnffMJ/KXE2Ro3M1QmhtQhLLKa1Y615FaOrCyZPFEGqFiMLZHYhVIzZ9w+z/rrueZZPF5eDfz8o7z2xnMMUJLDFKNTbZkMluXvk3kLrHK4q6iEtLCRS5unOlUOawfBoMlWhEMctuhF05wCdcgvHd+Ohp4FEElnUj9F1hXWXckqZgpyKxaWtyLrUNAUjR9ZPGsHU3MlT0VjtAwmHUYnQrQa8nN9vnSckFB/LUVfEOCy2pfMmYBfAwaVR9ALbCVsLffIDe3CQRmZ8OER10uSqIumxIOSv9lDQnPyyI/1Hl4fUIn/OYXV4D5ELJiyspxVs9r5XQi0fsaJ6nT4HN48tCbEh51wj228nN5UaDT8f2V9Oq/bUST/oCPCklJQswpeA1ZQL/6t8Y1nrguZoy6kimJq1xGA8eVrv6S7B/hIGajJCepdxVSpP26Tr8BRhpT3UhLV0R'], 'refusal': None, 'thinking_blocks': []}), provider_specific_fields={})], usage=Usage(completion_tokens=284, prompt_tokens=2888, total_tokens=3172, completion_tokens_details=CompletionTokensDetailsWrapper(accepted_prediction_tokens=None, audio_tokens=None, reasoning_tokens=115, rejected_prediction_tokens=None, text_tokens=169, image_tokens=None), prompt_tokens_details=PromptTokensDetailsWrapper(audio_tokens=None, cached_tokens=None, text_tokens=2888, image_tokens=None)), service_tier=None, vertex_ai_grounding_metadata=[], vertex_ai_url_context_metadata=[], vertex_ai_safety_results=[], vertex_ai_citation_metadata=[])
+⏱️ Response received in 6.71s
+DEBUG: Full response object: ModelResponse(id='0d6tade0MeXe7M8P0pyq8QE', created=1773002442, model='gemini-3.1-flash-lite', object='chat.completion', system_fingerprint=None, choices=[Choices(finish_reason='stop', index=0, message=Message(content='!@!{"tool": "postgresql", "query": "SELECT COUNT(DISTINCT p.nomer_reg) FROM reestr.pestitsidy p JOIN reestr.pestitsidy_primeneniya pp ON p.nomer_reg = pp.nomer_reg WHERE pp.vrednyy_obekt ILIKE \'%гельминтоспориоз%\' AND p.status = \'Действует\';"}!@!\n!@!{"tool": "postgresql", "query": "SELECT p.naimenovanie, p.registrant, p.deystvuyushchee_veshchestvo, p.srok_reg FROM reestr.pestitsidy p JOIN reestr.pestitsidy_primeneniya pp ON p.nomer_reg = pp.nomer_reg WHERE pp.vrednyy_obekt ILIKE \'%гельминтоспориоз%\' AND p.status = \'Действует\' LIMIT 5;"}!@!\n!@!{"tool": "web-search", "query": "fungicides for Helminthosporiosis control rotation strategy FRAC groups"}!@!\n!@!{"tool": "web-search", "query": "фунгициды против гельминтоспориоза ротация стратегия"}!@!', role='assistant', tool_calls=None, function_call=None, images=[], thinking_blocks=[], provider_specific_fields={'thought_signatures': ['EoUkCoIkAb4+9vsKhLlCBFB7oGf7WV4HE+sg38boaocnQEBq003NdTn/UfIJfzokqvFmxbg5UQN0c1p1kxJMEirR4KmTVtTXBCx31cGffEeKPuYaQcPk+4auCTFSPU6oQ5A8rCXDs3jOSQ0vgplzwdbzpbNrzRs711fOnc22JEFmi0ieLpfE2H0VjV/QJDlii/OQSGQPHMk1F03dRP4GRxjTt8sMYYU8pyTU6n5eRKRS4FwzWytHZZxx4TJmc4lPda7W6cJxHvrGikJ/ZpqpaDYkfN6KElMHfZ5zw/CClDMcFcqPJ6IMwImUv1Bd/YyfzxVAixbKIniRqESe/O4K6OL5fE+AEOWJg4zaNUm06Ei7KZlH4x/vWtw0l/Gv6mCaM24zvtr51bifBENSpy8sdNnIxLYkMa042Qo7uB5FOABZnSNoc6KJ/q3vN6S3k8j8o4D/bs1dRJiAs9Xy7rl3ZC0faFLk5wM7sNANC5ue13v9xLUkhVrlDQXd8AdASbFnkg78gC3i1+WifSh1gzFGbFkb0UWfLfvcg5Lc6rT2QXBHBcBi7EJ64Klec80Ba/kMC2cgaZK05my7O55BbWW3p/WGVLqu4pmGF006tLRQFarP/U71se72N9EQsLPx0hDxHjIXRX+KvRD0GKc6oFKlSUxGzBUtge0N7J2zHXKFjeXS4syShqTYNJouYeP6Dun5Pe9N/RuWkbUoe2GWDhF59epWLkIuRx45X/ZYEjuxL/WxSOaSgbAW4Icihe0xj7LJoh9W8WXJ18muKZyi1K5sPNE5Icq2AR3z8au8zhUJM5z8OxQFEhfxH6Qw0vrpnn/HZeoWi0z94DOPczg91JLI5WAaX5oa3xO/Tzn7cMuY8B1QX1MywdXwUUni1mm3iCRzVQTyvY1Zi4zlrkQ411Cu5WfxLYbuGUWyiHPxazBsLY7JFV64L71C/6Ka5zR3OsrhVNff1hyX7pHexT5UsHhLWjMJsRz+0c6YZH9jvjO53jYHgLG9HdCM9cxgH2lPsafXY/nc7pi4x4U87y9jtgcVTI+okZzhCN3hmm1+Qq1htJM8LS0Wl71ulZX1tPvUeH5W7K4aDSSlk/ei81IlF3vfHVQ9aMSNn1k03fVkvrXT2HSyS2LTlshM7GKz7m/XN8sgEx3Ln9Qf0HG9EuUdAa6foLZcLwE9JSfdmwjs1K6RYfNf5XIC0dy4Im6JUX7oUxebnQsop11Xbq+rg2/2+rQpl8AfqlLiZ5IY1N8ZIgQTEF8dfl8kyeS5dYhDpUXd91vQ/7Txmn/POdIOG8I8/Op1VIutK/deTNFDdt6zG55tpc31SPDn3dOPrnz06k4MVPvK0CIq941JMEBHBIIIlP7gDfds/J32V/rPqzMvQ+vNdL/xWrks111rDx8h3+bPJWOFhihvhAXv/LlMvsN3iGXlk70s/8pQw6Tq0XaOIzU7nWZfG5DOi7pO80pqnvO1s4fsIVcNIC9CfLnyIv+1RaTV2+dXMo42pmtsVFUmxJv/1ydI35QKUMKHXADzeEhNjkMlmrtzvX2rM9hFYL9yxB8giy2tlSQsTeH4KaVmOo2PkdcRiI/VBspy6PJPZeUIdV8oc//E7m/iyJaAipuno+NLg/n5nV/4gRWCD/l61JidK+jz85T7Ku8PI/GsJXFivcZLiJji8XtaEKtTnweIlSOOw3Mfi9Z9dkU/NSIEzoH1zBYbzQC8hfJ9d7SMjoZSWIVxHCVftwQ/fAaxyz+URxbnNjhlvAfdNZZzQTykt9nPUB1XQP5MoFKFXe829M94HnWWFkvj9FFiYvUuv2PuTrhnbTEcQCww60c9CNT/ZeNapmtTbWgT/RAqEbyixaBXJN6BxKHtaLvFuKherqxKQ0gHZCGgWMbcJ4zBlSOEnW9oTYd46mUmTm3b63Ko2SzYNY7CPXRhCE09Iaye8Dg6/5nY25EZjw/RnMyv2/2HA2SSFghkoUE4A6wVZX6MxkXUq7+Cr2Lom7D43Fpd/J1h3xDrT3KmqoNOEnQsU7sP0ntIkkM5WXBh0UZ6MrxQRYLRkzEBrDHuPAldMqS85XCGACRpwjgsBzNPREt8QnwHZ119oKO/kfKGj069Xx3yLMbROjUKQopaAPK0d2M/J/IN703x7MyMJuSqs8mtC2IRGF/vxfsoDPqsoD8riIdrhaKEL3ozRPRHPrKbIk3i9lE7cyhwldQjVwGUMGcCq4EkVX82UDMrBePX6bQIdkZRGdvDLmHsrk5mVjOFxxQZKHzEX+ZuoCgDwEAWcIBnxWsvlbn6EJ33NIh2QjGjA4QmUbG/v0XhggUZyXxXRHVviOmpvip2cCIKMSTXz1rTWGnCrbERnGc9QG94sqPZP4Pv7oHYlkOPsUxHFIcGbzAn1+MiUBvaP8zjA46p/1HmbhKdybpFIJZCtetMkksD0qX2GcTs+MbTFKgo5YjMx243wHyAN9EmECD0bp8vtXuLz6E79mXWEb0d7Atr7y1V/EYG+UBjCwyUOdJV5EwHGA/tgBKflT+6/vPfPH4DNFAHEtZv22Sc5pskyW/5kusgnQVFRsRKBX38/UyPOQXNB5gx2cgeNK+TAgvw6rHQ4ADsSQwkmr/CHZDybJmZ6jCUzLXgwaBHT5O0GiKMXAqQ7pSebBQ8TU+FUTaicgzqpMYfkNutYk7z/KKso3FFIXHE8bhzc/4q8hZY6T03XryOKvkKQnr6/ltb/ze1awGLKSyw7AqZcZXOWcun8kNNFEhy1a+DbpNTcPZRNiYAUnYtN1IpLrqmYdYU9pJCTYRgnYLsYmVNMnuRo23lxVm4JZdYBqgWU+K7J9mrKWN/N3XqxC+A6nutLElEBsYg2JYd0pUPJQR2O6d2xTALIMu+y5sPV2H/ZZ5wVbty8zG7SXQ9m+khvrU9IDhYRO5WWQknzXg5MoDfQjNBoDv+BPqe8wrm1fNo5XqGIeXhBh3memwSgNErqIT2DXAMW7aedwac+87CMzzVKCI0c9XnhCWqj4/ejHL70Tvyrr8PMLw0Bfr0EqzIzqUZCbGvONfqznIDmH5qAwaSFGa5N8l9x5KGmg5ZNgFl75WO7fAvVWmIQ9QrU+4OYrNdpCHjx18Cj+lGooSUWlxhO1FMkuDGW9NzMoRtmSaQioeVHKEP/CBo03v4uQ7pWCie1+7tCCGm6d3LvRsBs13ExeMCOMN/P0PceFKQFrDyb+FNyRZF8LGRigAtaQEl+DG2PRXyMmgHQ7El5QlNziwLdcBGm25WVjY0z6dKFlEu/gn4QfBnQ807VpRzcnI9KJ+S2+pcT1Ug5eQwTNvQ5H686EotvAVuiyZkC8DEMnK5u4eIpqf2l/e8YxmBCSW9eh2F558CktlZY9MD8PPoeZnGVKvSkGYVj8T2mjKa1ZPCcMF6Mu9SLG3ozTqnWlgT2HVkKXW2IMjAdpnQYW2+91Qj+vZqNabgRLJ6uEo6mbrK1DpdsbLL8Ol7VOARfTIuYsrdBQQV0J7xShJ0NQggoomqKBwzRVBF36q2Izuut9JYSGx6pRweWKcByY6rpxLzIiCyWbDeZU8aOQySQA50OMpThJ5mhXeqi6gbhmFS1P/fRI1WBBQzt1dshY+HBnEjUxthjMn7wjpQiwEAW8IKsp6McZcmLvcIx5xXW+S1niOS2vovmaev5ZNRkxcn858w+ks6pZO0ge8zpZEtqWA6uR1wWLKgCjf36Rk2GLFuJCGT/RNA1uFSiuY0B3SzNPQZgNfa/PaD7B1pNPTLdqu8jMi6UB7/aRHGEwNPrRUBccf7j5BWA35NGly8D8KR+JecQf81b2HWdArYXtaqd0iP4FoZAJKFmWq7FbQ9iJSUGfnspjcgWtOwdQPfee4m+ZfMdPSiwDvzi9uF5QFsQm3HkcA4eHgR/gVPG+lCJ28qoCyvl7Bae6g09/cgSXOSSkJBluDQtr79Nbjmqn/EVKP6DdbJ4GIdy0WWze8WzhQ7u7uq4Hr2kQzvr7xxf00Hw2/S+yeX++e3nnaFa95xT6J99lZ9SLiMlKnVyr7s35WhjbwmjglFEg7j9duz1RcwlRpH/wCTddl37ILImyo4J+SilfwFnKTORLuRO0bLd156GP+pm9I/l4mvmpctTgwqurG7oLcCLpyMJe+XP/TA8xNaFl2GUJ/KLi9diMk+hxALkFQuWcOh9p10RBBKaaP8ci5pjMdmP/dTOr9wFVGewmEsrddEdBjbxaKtNEgSe49Avdnh3MNj3ORFPta5UnC5kRq3T9WwNOJTwROiuzVGhJjqK2wZTHL+hfjWj4R6cLSJ6U/t2+aFXAE2VmxvtpaDb6iWj458ORhsAgEZRYOvpwUE5S6ITgymWezAKvwP2yOgWovkjtv9NBIVCTj+a7w1xrDlEC8OgJroaNAWoRfCgBv95I8x3dUoYasXw5sim39UppgPnRsU6EitKMSLxxWuh/dL82gTGnyv0BWNWvy3D+F2Yp28ZhBQEPsGAein1KOA6OA7OXLlmAAtmFZ/fKyRiydR6x1Gz8kBCm1pLsUpRPYo8iTVQXDmh3E/AUp4d/iJuWg3mn1tkrFzwjdkpWNSgm4hhOHtH39vQ1g4JzBA91U/hf+wxhGya1mx3p2XFzoX692Qxhb8fWWp6ZOZ8bxdI1GFJb/HeM+5CtMmA2R4Z3R+wtF9k8oUalcnuUF/LzoG9mR4PZBNPLxLn7VKGwG8jMs3BAufH0DsBW5ZeFqgb9hyHbOvdhEx7egYmyfbPIVZtgYXbiZtKnHOAWzXf0Lvz5c3Jas1EfIvDKRxTzuc6Kp+01V/3a/3QIpZlKjr+Pf/FmFThDOs5qS5/5Fqp06K55zRpocVOiQsP5F2DIYBuygY0c2LXCL+MYSYNk/73bRLx77WjSEUXE61xiHQX3nrTAo1nfiedpT0zYFmaTObLDI2l63GiwwcP4jISaly3Z2QLoN4DpeBMNoVecKLjYF6yuKFtrc59jsQGy7ooZr/uXGxBchAuC6zKTji+4tXQTPn01UrQcwUgyQP2KgQTWrNiPzDpReHsYkMwSG3UAR+AHmHpqwyQ3uuQW8C6WG22DxigmZZIdmaz1Mc2dnFe27sgsIA1OT2otL/q2SVuTO718Pwou9yI2FSqWLXEqstpJXTNQHbCJi+DDmFQa4d4RfolNxAaFuO4sMVk2NnKj13GOCc9FqJd/ysqgMOKdUOSkI8z3ZwLji/BCGmkaHAG5vk+l7JC8ts07p1pJOdazyY2zye6Wd/eKOwD3LutQpaB+K/npGp9R/a6yqPERW/1VqSXaXKO4ni2/YemmRnaFdtNfNMVOFbSVcspUdleiPzYHlUp3qm9TVdEzpUUtu2YTY4rJ0HS2ToUKPmmhcqMSm0YeD5JjBU8VZiZRewLUbU1kEI78XrDyBbGVZ/qMjk6UeVX1inEQXRkBWF1ZNkCEFP5nYos+crSdt6CrwNkUX0CAfpmS169Y4CQZIkSzWo99GrQ0BHD/1Aduh+0+GMmsiZ+UMLMtV3kfBoCMJS+oVfpBQoQdlg5rpMv2ShH99PMZdK+qWVgMBIvC4vLcrIfxlzUthPWY0o0ekdA42PQvv3iMi1jM0qy8jD0gHLH5dJiHzkQIrDr2CGpbQZ0r5wPy4ZlXy9U4e4+aWWKw+Ew9YVDVGHDAUUvyOhR0JmBJNdFzVaDk14I3zi4CLIHCVpA9xL2kiIF2xLs4CbFEx3a+OuDU3SpPQtckwovjPn9alhAVCHezVeA146BAszbJcQWnVLZpAcyt0uGI/WgcHIJB3/UYXqM41+y8Azu2pTNq+i+FbsQlZab9tD8n71RQ1OjpTf1RWrrrHkWxOq37qLOuuIIsQBzYXHP+5DJxjNtAjnGhBvBwPVY9HshQnkq3onMdjWGHV5zORbQXK5E6f7JCNd8Lgexpn3lK9RK7vLeqz76M54QakdnHsh6yR/XEaWMyk9d9dxOczF9EevBeekJTU8q5LFZ5qfiQDUYO+qsyVomZcaA2SQ3IDMRUjue9ndQ0WwvEZu62PPh9ECXd11oA2g/GPLL71EecgRefGgGJdRgITgeJqG+bh6Hl1AhbTnkCd0xGGM5B1U7jnDC+6AUhno3Dq7AtYiAxxgz355em05safUZ9G3MJVftAZDD7Y98u8FYJbygV3BgZHN4Ft3B8j3WLP7DDKfzbT+vJgc3lbex7O4aBI='], 'refusal': None, 'thinking_blocks': []}), provider_specific_fields={})], usage=Usage(completion_tokens=1584, prompt_tokens=2975, total_tokens=4559, completion_tokens_details=CompletionTokensDetailsWrapper(accepted_prediction_tokens=None, audio_tokens=None, reasoning_tokens=1305, rejected_prediction_tokens=None, text_tokens=279, image_tokens=None), prompt_tokens_details=PromptTokensDetailsWrapper(audio_tokens=None, cached_tokens=None, text_tokens=2975, image_tokens=None)), service_tier=None, vertex_ai_grounding_metadata=[], vertex_ai_url_context_metadata=[], vertex_ai_safety_results=[], vertex_ai_citation_metadata=[])
 
 ------------------------------------------------------------
 [AGENT THOUGHTS / RESPONSE]
-!@!{"tool": "postgresql", "query": "SELECT p.naimenovanie, p.registrant, p.deystvuyushchee_veshchestvo, p.status, p.srok_reg, pp.kultura, pp.vrednyy_obekt, pp.norma, pp.osobennosti FROM reestr.pestitsidy p LEFT JOIN reestr.pestitsidy_primeneniya pp ON p.nomer_reg = pp.nomer_reg WHERE p.naimenovanie ILIKE '%Виртуоз%' AND p.status = 'Действует'"}!@!
-!@!{"tool": "web-search", "query": "препарат Виртуоз действующие вещества FRAC группа"}!@!
+!@!{"tool": "postgresql", "query": "SELECT COUNT(DISTINCT p.nomer_reg) FROM reestr.pestitsidy p JOIN reestr.pestitsidy_primeneniya pp ON p.nomer_reg = pp.nomer_reg WHERE pp.vrednyy_obekt ILIKE '%гельминтоспориоз%' AND p.status = 'Действует';"}!@!
+!@!{"tool": "postgresql", "query": "SELECT p.naimenovanie, p.registrant, p.deystvuyushchee_veshchestvo, p.srok_reg FROM reestr.pestitsidy p JOIN reestr.pestitsidy_primeneniya pp ON p.nomer_reg = pp.nomer_reg WHERE pp.vrednyy_obekt ILIKE '%гельминтоспориоз%' AND p.status = 'Действует' LIMIT 5;"}!@!
+!@!{"tool": "web-search", "query": "fungicides for Helminthosporiosis control rotation strategy FRAC groups"}!@!
+!@!{"tool": "web-search", "query": "фунгициды против гельминтоспориоза ротация стратегия"}!@!
 ------------------------------------------------------------
 
 ------------------------------------------------------------
 [AGENT SQL QUERY]
-SELECT p.naimenovanie, p.registrant, p.deystvuyushchee_veshchestvo, p.status, p.srok_reg, pp.kultura, pp.vrednyy_obekt, pp.norma, pp.osobennosti FROM reestr.pestitsidy p LEFT JOIN reestr.pestitsidy_primeneniya pp ON p.nomer_reg = pp.nomer_reg WHERE p.naimenovanie ILIKE '%Виртуоз%' AND p.status = 'Действует'
+SELECT COUNT(DISTINCT p.nomer_reg) FROM reestr.pestitsidy p JOIN reestr.pestitsidy_primeneniya pp ON p.nomer_reg = pp.nomer_reg WHERE pp.vrednyy_obekt ILIKE '%гельминтоспориоз%' AND p.status = 'Действует';
 ------------------------------------------------------------
 
 ------------------------------------------------------------
 [AGENT SQL RESULT]
 [
   {
-    "naimenovanie": "Виртуоз",
-    "registrant": "ООО «Ярило», 1083123001500",
+    "count": 177
+  }
+]
+------------------------------------------------------------
+
+------------------------------------------------------------
+[AGENT SQL QUERY]
+SELECT p.naimenovanie, p.registrant, p.deystvuyushchee_veshchestvo, p.srok_reg FROM reestr.pestitsidy p JOIN reestr.pestitsidy_primeneniya pp ON p.nomer_reg = pp.nomer_reg WHERE pp.vrednyy_obekt ILIKE '%гельминтоспориоз%' AND p.status = 'Действует' LIMIT 5;
+------------------------------------------------------------
+
+------------------------------------------------------------
+[AGENT SQL RESULT]
+[
+  {
+    "naimenovanie": "Тирада",
+    "registrant": "ВЗСП, 1025006038958",
     "deystvuyushchee_veshchestvo": [
       {
-        "veshchestvo": "Пропиконазол",
-        "koncentraciya": "250"
+        "veshchestvo": "Тирам",
+        "koncentraciya": "400"
       },
       {
-        "veshchestvo": "Ципроконазол",
-        "koncentraciya": "80"
+        "veshchestvo": "Дифеноконазол",
+        "koncentraciya": "30"
       }
     ],
-    "status": "Действует",
-    "srok_reg": "16.09.2026",
-    "kultura": "Пшеница яровая и озимая",
-    "vrednyy_obekt": "Ржавчина бурая, ржавчина стеблевая, ржавчина желтая, мучнистая роса, септориоз листьев, пиренофороз",
-    "norma": "0,4-0,5",
-    "osobennosti": ""
+    "srok_reg": "24.03.2030"
   },
   {
-    "naimenovanie": "Виртуоз",
-    "registrant": "ООО «Ярило», 1083123001500",
+    "naimenovanie": "Тирада",
+    "registrant": "ВЗСП, 1025006038958",
+    "deystvuyushchee_veshchestvo": [
+      {
+        "veshchestvo": "Тирам",
+        "koncentraciya": "400"
+      },
+      {
+        "veshchestvo": "Дифеноконазол",
+        "koncentraciya": "30"
+      }
+    ],
+    "srok_reg": "24.03.2030"
+  },
+  {
+    "naimenovanie": "Пропишанс Супер",
+    "registrant": "ООО \"ШАНС\", 1093668046812",
     "deystvuyushchee_veshchestvo": [
       {
         "veshchestvo": "Пропиконазол",
@@ -223,30 +250,40 @@ SELECT p.naimenovanie, p.registrant, p.deystvuyushchee_veshchestvo, p.status, p.
         "koncentraciya": "80"
       }
     ],
-    "status": "Действует",
-    "srok_reg": "16.09.2026",
-    "kultura": "Ячмень яровой, озимый",
-    "vrednyy_obekt": "Гельмин...
+    "srok_reg": "02.05.2034"
+  },
+  {
+    "naimenova...
 ------------------------------------------------------------
 
 ------------------------------------------------------------
 [AGENT WEB SEARCH]
-препарат Виртуоз действующие вещества FRAC группа
+fungicides for Helminthosporiosis control rotation strategy FRAC groups
 ------------------------------------------------------------
 
 ------------------------------------------------------------
 [AGENT SEARCH RESULT]
-Received 9115 chars from Tavily
+Received 7023 chars from Tavily
+------------------------------------------------------------
+
+------------------------------------------------------------
+[AGENT WEB SEARCH]
+фунгициды против гельминтоспориоза ротация стратегия
+------------------------------------------------------------
+
+------------------------------------------------------------
+[AGENT SEARCH RESULT]
+Received 8682 chars from Tavily
 ------------------------------------------------------------
 
 [STEP 2] Requesting LiteLLM (gemini-3.1-flash-lite)...
-⏱️ Response received in 6.94s
-DEBUG: Full response object: ModelResponse(id='ttutabWvHoiEkdUPv8Ww-AU', created=1773001647, model='gemini-3.1-flash-lite', object='chat.completion', system_fingerprint=None, choices=[Choices(finish_reason='stop', index=0, message=Message(content='!@!{"tool": "answer-chat", "answer": "### 📄 Профиль препарата: Виртуоз\\n\\n- 🏢 **Регистратор:** ООО «Ярило»\\n- 🧬 **Состав (ДВ):** Пропиконазол (250 г/л) + Ципроконазол (80 г/л)\\n- 📅 **Статус:** Действует до <code>16.09.2026</code>\\n- 🧪 **Химический класс:** Триазолы (FRAC 3, DMI-фунгициды)\\n\\n---\\n\\n### 🚜 Регламент применения (Официальные данные):\\n\\n• <b>Пшеница яровая и озимая:</b>\\n  - <b>Вредный объект:</b> Ржавчина (бурая, стеблевая, желтая), мучнистая роса, септориоз листьев, пиренофороз.\\n  - <b>Норма расхода:</b> <code>0,4–0,5 л/га</code>\\n\\n• <b>Ячмень яровой и озимый:</b>\\n  - <b>Вредный объект:</b> Гельминтоспориозные пятнистости (темно-бурая, сетчатая, полосатая), мучнистая роса, ржавчины (карликовая, бурая, стеблевая), ринхоспориоз.\\n  - <b>Норма расхода:</b> <code>0,4–0,5 л/га</code>\\n\\n• <b>Рожь озимая:</b>\\n  - <b>Вредный объект:</b> Мучнистая роса, ржавчины (бурая, стеблевая), септориоз.\\n  - <b>Норма расхода:</b> <code>0,4–0,5 л/га</code>\\n\\n• <b>Овес:</b>\\n  - <b>Вредный объект:</b> Красно-бурая пятнистость.\\n  - <b>Норма расхода:</b> <code>0,4–0,5 л/га</code>\\n\\n• <b>Свекла сахарная:</b>\\n  - <b>Вредный объект:</b> Церкоспороз, мучнистая роса.\\n  - <b>Норма расхода:</b> <code>0,5–0,7 л/га</code>\\n\\n---\\n\\n### 📦 Рекомендации для ротации и аналоги:\\n\\nПрепарат «Виртуоз» относится к группе **триазолов (FRAC 3)**. Для предотвращения развития резистентности (привыкания патогенов) крайне важно чередовать его с фунгицидами других химических групп:\\n\\n- **Рекомендуемая ротация:** Чередуйте с препаратами групп **SDHI (FRAC 7)** или **стробилуринов (FRAC 11)**.\\n- **Аналоги по действующим веществам:** На рынке присутствуют другие комбинированные препараты с аналогичным сочетанием пропиконазола и ципроконазола (например, «Альто Супер» и его дженерики), однако «Виртуоз» является самостоятельным зарегистрированным продуктом.\\n\\n🔎 Всего найдено <b>5</b> записей в реестре для данного препарата.\\n\\n---\\n\\n**Интерактивные предложения:**\\n- Найти препараты групп SDHI или стробилуринов для ротации с «Виртуозом»?\\n- Подобрать фунгициды с другими действующими веществами для защиты зерновых от септориоза?"}!@!', role='assistant', tool_calls=None, function_call=None, images=[], thinking_blocks=[], provider_specific_fields={'thought_signatures': ['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'], 'refusal': None, 'thinking_blocks': []}), provider_specific_fields={})], usage=Usage(completion_tokens=1495, prompt_tokens=7349, total_tokens=8844, completion_tokens_details=CompletionTokensDetailsWrapper(accepted_prediction_tokens=None, audio_tokens=None, reasoning_tokens=673, rejected_prediction_tokens=None, text_tokens=822, image_tokens=None), prompt_tokens_details=PromptTokensDetailsWrapper(audio_tokens=None, cached_tokens=None, text_tokens=7349, image_tokens=None)), service_tier=None, vertex_ai_grounding_metadata=[], vertex_ai_url_context_metadata=[], vertex_ai_safety_results=[], vertex_ai_citation_metadata=[])
+⏱️ Response received in 5.37s
+DEBUG: Full response object: ModelResponse(id='3N6taf6CJpvw7M8PtIvZwAE', created=1773002454, model='gemini-3.1-flash-lite', object='chat.completion', system_fingerprint=None, choices=[Choices(finish_reason='stop', index=0, message=Message(content='!@!{"tool": "answer-chat", "answer": "Для борьбы с гельминтоспориозом (включая сетчатый гельминтоспориоз) в Российской Федерации зарегистрировано 177 препаратов. Эффективная стратегия защиты строится на сочетании протравливания семян и фунгицидных обработок по вегетации с обязательной ротацией действующих веществ (ДВ) разных химических групп (FRAC) для предотвращения резистентности.\\n\\n### 📄 Профили некоторых зарегистрированных препаратов\\nНиже представлены примеры препаратов, имеющих официальную регистрацию для борьбы с гельминтоспориозом:\\n\\n1. **Прозаро, КЭ**\\n   - 🏢 **Регистратор:** Байер КропСайенс АГ\\n   - 🧬 **Состав (ДВ):** Тебуконазол (125 г/л) + Протиоконазол (125 г/л)\\n   - 📅 **Статус:** Действует до 24.10.2029\\n\\n2. **Пропишанс Супер, КЭ**\\n   - 🏢 **Регистратор:** ШАНС\\n   - 🧬 **Состав (ДВ):** Пропиконазол (250 г/л) + Ципроконазол (80 г/л)\\n   - 📅 **Статус:** Действует до 02.05.2034\\n\\n3. **Тирада, КС**\\n   - 🏢 **Регистратор:** ВЗСП\\n   - 🧬 **Состав (ДВ):** Тирам (400 г/л) + Дифеноконазол (30 г/л)\\n   - 📅 **Статус:** Действует до 24.03.2030\\n\\n### 🚜 Рекомендации по стратегии защиты\\nДля эффективного контроля гельминтоспориоза рекомендуется придерживаться следующих принципов:\\n\\n*   **Протравливание семян:** Это критический этап, так как инфекция часто передается через семенной материал. Используйте препараты на основе триазолов (например, тебуконазол, дифеноконазол) и фенилпирролов.\\n*   **Ротация (Антирезистентная стратегия):** Не используйте препараты одной группы (например, только триазолы) более двух раз подряд. Чередуйте их с фунгицидами других групп:\\n    *   **Группа 3 (Триазолы):** (тебуконазол, пропиконазол, ципроконазол) — системное действие.\\n    *   **Группа 11 (Стробилурины):** (пираклостробин, азоксистробин) — часто используются в смесях для усиления эффекта.\\n    *   **Группа 7 (SDHI):** (флуксапироксад, боскалид) — современные ингибиторы дыхания грибов.\\n    *   **Группа M (Мультисайтовые):** (тирам, манкоцеб) — контактные препараты, снижающие риск развития устойчивости.\\n\\n*   **Агротехнические меры:** Соблюдение севооборота, глубокая заделка растительных остатков (где зимует патоген) и оптимальные сроки сева значительно снижают инфекционный фон.\\n\\n🔎 **Внимание:** Это лишь примеры. Всего в реестре найдено **177** препаратов, подходящих под ваш запрос. Для выбора конкретного препарата под вашу культуру (пшеница, ячмень, кукуруза) и фазу развития, рекомендую уточнить запрос.\\n\\n---\\n**Интерактивные предложения:**\\n- Найти препараты для конкретной культуры (например, только для ячменя или кукурузы)?\\n- Подобрать комбинацию препаратов из разных химических групп для составления схемы ротации?"}!@!', role='assistant', tool_calls=None, function_call=None, images=[], thinking_blocks=[], provider_specific_fields={'thought_signatures': ['EqUECqIEAb4+9vsy2fHezK0Sg3X1ejBXw52KOtFCsmkduxyY0NxI0HECy1oRHMfE3r6k4NRuIcHrktL1P0n/FbnOxa6JBHbjXDzlHeO24B9/gZTMMVxACLzSSpQYLD7Jmn2qIiOF6DZuV2rYiubmPzAuKmgDsk7lH46UTDQ0SXKbEaxSFOLi1JPYUwXYoznYl26/L+iC/DXTOANgYh2Wl0eGH/Xca7AMVvJ2OXPUcw/LxKULKKO2Or5nHawMdxoOWu09X0Dj4hLa082H5PxrRkN/lrsiZ25de74Eriy/lg9HEmgb89RWob09nl2oMiwUb3eJBGn0DZtMUMr2gBcQgX6lr+TxyuhiMBn5QRSoxATpLHTI3DUOoQnBV8zIiW/mWjT4jgtSn5EKqOFm9NsXpFBEqDkiLyc1Np8sCTjXLp16Mv5PSsh/hxlWNdB8SgTCrbqDIJ/69RDRX1VtjCSWOm+YnIoUoL9J0GnLKoGKuO8DAKu6b20Z2nrb56zQpCFu3gDAjy15O9JMsCGwzQxB1TJnGqUTJ+/a+SXlqcu09Wxyb6C/eLVofAJxEQk3YoxKG/lZvRj2CpBxYVG9fWacnO5Ql0/LxwLammzdPdsTLYzFIhGypIYep7zMmQ/rH2PLpJt8W1t0Wqb9SlMxbEZ1VwzPzcsPi34pQv2nRkxoYc2Oz7qxG0mE8iv2jSXi22JjZ1SFoFZSQDQ2XnjYd8AoWGRXUF9+4aHi'], 'refusal': None, 'thinking_blocks': []}), provider_specific_fields={})], usage=Usage(completion_tokens=1040, prompt_tokens=8607, total_tokens=9647, completion_tokens_details=CompletionTokensDetailsWrapper(accepted_prediction_tokens=None, audio_tokens=None, reasoning_tokens=127, rejected_prediction_tokens=None, text_tokens=913, image_tokens=None), prompt_tokens_details=PromptTokensDetailsWrapper(audio_tokens=None, cached_tokens=None, text_tokens=8607, image_tokens=None)), service_tier=None, vertex_ai_grounding_metadata=[], vertex_ai_url_context_metadata=[], vertex_ai_safety_results=[], vertex_ai_citation_metadata=[])
 
 ------------------------------------------------------------
 [AGENT THOUGHTS / RESPONSE]
-!@!{"tool": "answer-chat", "answer": "### 📄 Профиль препарата: Виртуоз\n\n- 🏢 **Регистратор:** ООО «Ярило»\n- 🧬 **Состав (ДВ):** Пропиконазол (250 г/л) + Ципроконазол (80 г/л)\n- 📅 **Статус:** Действует до <code>16.09.2026</code>\n- 🧪 **Химический класс:** Триазолы (FRAC 3, DMI-фунгициды)\n\n---\n\n### 🚜 Регламент применения (Официальные данные):\n\n• <b>Пшеница яровая и озимая:</b>\n  - <b>Вредный объект:</b> Ржавчина (бурая, стеблевая, желтая), мучнистая роса, септориоз листьев, пиренофороз.\n  - <b>Норма расхода:</b> <code>0,4–0,5 л/га</code>\n\n• <b>Ячмень яровой и озимый:</b>\n  - <b>Вредный объект:</b> Гельминтоспориозные пятнистости (темно-бурая, сетчатая, полосатая), мучнистая роса, ржавчины (карликовая, бурая, стеблевая), ринхоспориоз.\n  - <b>Норма расхода:</b> <code>0,4–0,5 л/га</code>\n\n• <b>Рожь озимая:</b>\n  - <b>Вредный объект:</b> Мучнистая роса, ржавчины (бурая, стеблевая), септориоз.\n  - <b>Норма расхода:</b> <code>0,4–0,5 л/га</code>\n\n• <b>Овес:</b>\n  - <b>Вредный объект:</b> Красно-бурая пятнистость.\n  - <b>Норма расхода:</b> <code>0,4–0,5 л/га</code>\n\n• <b>Свекла сахарная:</b>\n  - <b>Вредный объект:</b> Церкоспороз, мучнистая роса.\n  - <b>Норма расхода:</b> <code>0,5–0,7 л/га</code>\n\n---\n\n### 📦 Рекомендации для ротации и аналоги:\n\nПрепарат «Виртуоз» относится к группе **триазолов (FRAC 3)**. Для предотвращения развития резистентности (привыкания патогенов) крайне важно чередовать его с фунгицидами других химических групп:\n\n- **Рекомендуемая ротация:** Чередуйте с препаратами групп **SDHI (FRAC 7)** или **стробилуринов (FRAC 11)**.\n- **Аналоги по действующим веществам:** На рынке присутствуют другие комбинированные препараты с аналогичным сочетанием пропиконазола и ципроконазола (например, «Альто Супер» и его дженерики), однако «Виртуоз» является самостоятельным зарегистрированным продуктом.\n\n🔎 Всего найдено <b>5</b> записей в реестре для данного препарата.\n\n---\n\n**Интерактивные предложения:**\n- Найти препараты групп SDHI или стробилуринов для ротации с «Виртуозом»?\n- Подобрать фунгициды с другими действующими веществами для защиты зерновых от септориоза?"}!@!
+!@!{"tool": "answer-chat", "answer": "Для борьбы с гельминтоспориозом (включая сетчатый гельминтоспориоз) в Российской Федерации зарегистрировано 177 препаратов. Эффективная стратегия защиты строится на сочетании протравливания семян и фунгицидных обработок по вегетации с обязательной ротацией действующих веществ (ДВ) разных химических групп (FRAC) для предотвращения резистентности.\n\n### 📄 Профили некоторых зарегистрированных препаратов\nНиже представлены примеры препаратов, имеющих официальную регистрацию для борьбы с гельминтоспориозом:\n\n1. **Прозаро, КЭ**\n   - 🏢 **Регистратор:** Байер КропСайенс АГ\n   - 🧬 **Состав (ДВ):** Тебуконазол (125 г/л) + Протиоконазол (125 г/л)\n   - 📅 **Статус:** Действует до 24.10.2029\n\n2. **Пропишанс Супер, КЭ**\n   - 🏢 **Регистратор:** ШАНС\n   - 🧬 **Состав (ДВ):** Пропиконазол (250 г/л) + Ципроконазол (80 г/л)\n   - 📅 **Статус:** Действует до 02.05.2034\n\n3. **Тирада, КС**\n   - 🏢 **Регистратор:** ВЗСП\n   - 🧬 **Состав (ДВ):** Тирам (400 г/л) + Дифеноконазол (30 г/л)\n   - 📅 **Статус:** Действует до 24.03.2030\n\n### 🚜 Рекомендации по стратегии защиты\nДля эффективного контроля гельминтоспориоза рекомендуется придерживаться следующих принципов:\n\n*   **Протравливание семян:** Это критический этап, так как инфекция часто передается через семенной материал. Используйте препараты на основе триазолов (например, тебуконазол, дифеноконазол) и фенилпирролов.\n*   **Ротация (Антирезистентная стратегия):** Не используйте препараты одной группы (например, только триазолы) более двух раз подряд. Чередуйте их с фунгицидами других групп:\n    *   **Группа 3 (Триазолы):** (тебуконазол, пропиконазол, ципроконазол) — системное действие.\n    *   **Группа 11 (Стробилурины):** (пираклостробин, азоксистробин) — часто используются в смесях для усиления эффекта.\n    *   **Группа 7 (SDHI):** (флуксапироксад, боскалид) — современные ингибиторы дыхания грибов.\n    *   **Группа M (Мультисайтовые):** (тирам, манкоцеб) — контактные препараты, снижающие риск развития устойчивости.\n\n*   **Агротехнические меры:** Соблюдение севооборота, глубокая заделка растительных остатков (где зимует патоген) и оптимальные сроки сева значительно снижают инфекционный фон.\n\n🔎 **Внимание:** Это лишь примеры. Всего в реестре найдено **177** препаратов, подходящих под ваш запрос. Для выбора конкретного препарата под вашу культуру (пшеница, ячмень, кукуруза) и фазу развития, рекомендую уточнить запрос.\n\n---\n**Интерактивные предложения:**\n- Найти препараты для конкретной культуры (например, только для ячменя или кукурузы)?\n- Подобрать комбинацию препаратов из разных химических групп для составления схемы ротации?"}!@!
 ------------------------------------------------------------
 
-✅ FINAL ANSWER DELIVERED (Total time: 6.94s)
+✅ FINAL ANSWER DELIVERED (Total time: 5.37s)
 ===============================================================================================
