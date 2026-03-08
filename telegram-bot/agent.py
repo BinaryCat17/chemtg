@@ -19,11 +19,22 @@ class RegistryAgent:
         self.model = config.LLM_MODEL
         self.api_base = os.getenv('LITELLM_BASE_URL')
         self.system_prompt = prompts.get_system_prompt()
+        self.log_path = "/app/agent_log.log"
+
+    def _to_log(self, text: str, mode: str = 'a'):
+        """Выводит текст в консоль и записывает в файл agent_log.log"""
+        print(text, flush=True)
+        try:
+            with open(self.log_path, mode, encoding='utf-8') as f:
+                f.write(text + "\n")
+        except Exception as e:
+            print(f"Logging error: {e}")
 
     def _log_step(self, title: str, content: str):
-        """Красивый вывод шага агента в консоль"""
+        """Красивый вывод шага агента в консоль и лог"""
         separator = "-" * 60
-        print(f"\n{separator}\n[AGENT {title.upper()}]\n{content}\n{separator}", flush=True)
+        log_text = f"\n{separator}\n[AGENT {title.upper()}]\n{content}\n{separator}"
+        self._to_log(log_text)
 
     async def run_sql(self, query: str) -> str:
         """Выполняет SQL запрос и возвращает результат"""
@@ -68,40 +79,46 @@ class RegistryAgent:
 
     async def process_message(self, message: str, history: List[Dict[str, str]]) -> str:
         """Основной цикл обработки сообщения (Reasoning Loop)"""
+        # Очищаем лог при каждом новом запросе (mode='w') и пишем шапку
+        header = f"\n{'='*95}\n🚀 NEW AGENT SESSION | User: {message}\n"
+        header += f"📊 MODEL: {self.model}\n"
+        header += f"📊 CONTEXT INFO: Messages={len(history)+2}, System Prompt={len(self.system_prompt)} chars\n"
+        header += f"--- SYSTEM PROMPT START ---\n{self.system_prompt}\n--- SYSTEM PROMPT END ---\n"
+        header += f"{'='*95}"
+        self._to_log(header, mode='w')
+
         messages = [{"role": "system", "content": self.system_prompt}]
         for item in history:
             messages.append(item)
         messages.append({"role": "user", "content": message})
-
-        print(f"\n{'='*95}\n🚀 NEW AGENT SESSION | User: {message}", flush=True)
-        print(f"📊 MODEL: {self.model}", flush=True)
-        print(f"📊 CONTEXT INFO: Messages={len(messages)}, System Prompt={len(self.system_prompt)} chars", flush=True)
-        print(f"--- SYSTEM PROMPT START ---\n{self.system_prompt}\n--- SYSTEM PROMPT END ---", flush=True)
-        print(f"{'='*95}", flush=True)
 
         max_iterations = 8
         iteration = 0
         
         while iteration < max_iterations:
             iteration += 1
-            print(f"\n[STEP {iteration}] Requesting LiteLLM ({self.model})...", flush=True)
+            self._to_log(f"\n[STEP {iteration}] Requesting LiteLLM ({self.model})...")
             start_time = time.time()
             
             try:
                 response = await acompletion(
                     model=f"openai/{self.model}",
                     messages=messages,
-                    temperature=0.1,  # Увеличено для стабильности старта
+                    temperature=0.1,
                     api_base=self.api_base,
                     api_key="sk-no-key-required"
                 )
                 
                 duration = time.time() - start_time
-                print(f"⏱️ Response received in {duration:.2f}s", flush=True)
+                self._to_log(f"⏱️ Response received in {duration:.2f}s")
+                
+                # Логируем полный объект ответа для диагностики
+                self._to_log(f"DEBUG: Full response object: {response}")
                 
                 response_text = response.choices[0].message.content or ""
                 
                 if not response_text.strip():
+                    self._to_log(f"DEBUG: Empty response text! Finish reason: {response.choices[0].finish_reason}")
                     if iteration == 1:
                         messages.append({"role": "user", "content": "Please start your research now. Use tools if needed. Your output must follow the !@!{JSON}!@! format."})
                         continue
@@ -113,7 +130,7 @@ class RegistryAgent:
                 tool_calls = re.findall(r'!@!({.*?})!@!', response_text, re.DOTALL)
                 
                 if not tool_calls:
-                    print("⚠️ WARNING: No !@!{...}!@! format detected. Nudging model.", flush=True)
+                    self._to_log("⚠️ WARNING: No !@!{...}!@! format detected. Nudging model.")
                     messages.append({
                         "role": "user", 
                         "content": "You didn't use the required !@!{\"tool\": \"...\"}!@! format. ALL actions and final answers MUST be executed via tools. If you are ready to answer the user, use the 'answer-chat' tool."
@@ -159,12 +176,12 @@ class RegistryAgent:
                         messages.append({"role": "user", "content": f"Your JSON tool call was invalid: {err_msg}. Please fix it."})
                 
                 if final_answer:
-                    print(f"\n✅ FINAL ANSWER DELIVERED (Total time: {time.time()-start_time:.2f}s)\n{'='*95}", flush=True)
+                    self._to_log(f"\n✅ FINAL ANSWER DELIVERED (Total time: {time.time()-start_time:.2f}s)\n{'='*95}")
                     return final_answer
                 
             except Exception as e:
                 err_msg = f"⚠️ Agent Error: {str(e)}"
-                print(err_msg, flush=True)
+                self._to_log(err_msg)
                 return err_msg
 
         return "⚠️ Превышено количество итераций."
