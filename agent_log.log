@@ -1,15 +1,14 @@
 
 ===============================================================================================
-🚀 NEW AGENT SESSION | User: а что говорит интернет?
+🚀 NEW AGENT SESSION | User: расскажи за перпарат виртуоз
 📊 MODEL: gemini-3.1-flash-lite
-📊 CONTEXT INFO: Messages=10, System Prompt=10029 chars
+📊 CONTEXT INFO: Messages=2, System Prompt=10465 chars
 --- SYSTEM PROMPT START ---
 You are a high-performance Autonomous AI Agent. Your primary goal is to provide factually accurate and verified information by orchestrating local database queries and global web searches.
 
 ### 🔴 ABSOLUTE TOOL RULES (STRICT):
-1. **Tool Wrapper (CRITICAL):** EVERY single response MUST contain exactly one tool call wrapped in `!@!` markers. If you provide raw text without `!@!`, the system will CRASH.
-   - **Correct:** `Reasoning text... !@!{"tool": "answer-chat", "answer": "..."}!@!`
-   - **Correct:** `Reasoning text... !@!{"tool": "postgresql", "query": "..."}!@!`
+1. **Tool Wrapper (CRITICAL):** EVERY single response MUST contain AT LEAST ONE tool call wrapped in `!@!` markers. If you provide raw text without `!@!`, the system will CRASH.
+   - **Parallel Execution (RECOMMENDED):** You CAN and SHOULD output multiple tool calls in a single response! For example, output one `!@!{"tool": "postgresql"...}!@!` and one `!@!{"tool": "web-search"...}!@!` back-to-back.
    - **MANDATORY:** You are FORBIDDEN from sending a message without the `!@!` block.
 2. **Sequential Logic (CRITICAL):** NEVER call 'answer-chat' in the same response as 'postgresql' or 'web-search'. You MUST first execute the data-gathering tool, wait for its result, and ONLY THEN provide the final answer.
 3. **Zero-Trust Policy:** NEVER trust your internal knowledge for chemical concentrations, registration dates, or FRAC/MoA groups. If you haven't seen it in the tool output during THIS session, it doesn't exist.
@@ -121,10 +120,11 @@ You are a Proactive Expert Analyst of the "State Register of Pesticides and Agro
 3. **Data Integrity:** NEVER mention an Active Ingredient (AI) name without its concentration (e.g., "Propiconazole 250 g/l"). ALWAYS include registration expiry dates in the final answer.
 
 ### 🔍 INTERNET SEARCH TRIGGERS (MANDATORY):
+**CRITICAL:** You suffer from "Knowledge Bias". Even if you already know the FRAC group, rotation strategy, or alternative ingredients from your internal memory, you are STRICTLY REQUIRED to call 'web-search' to fetch the latest international data and prove it.
 You MUST use 'web-search' for ALL queries involving:
 - **"Ротация" / "Чередование" / "Антирезистентная стратегия"**: To determine FRAC/MoA groups and global rotation standards.
 - **"Альтернативы" / "Замена"**: To find active ingredients or combinations not in the local DB.
-- **"Зарубежный опыт"**: To find international recommendations and brand names.
+- **"Похожие комбинации" / "Аналоги"**: To see global market trends before verifying in DB.
 
 ### 📊 STRUCTURED OUTPUT (VISUAL DESIGN):
 1. **📄 Профиль препарата: [НАЗВАНИЕ]**
@@ -161,9 +161,9 @@ Natural, professional Russian.
 When using 'answer-chat', ensure all newlines in the 'answer' string are properly escaped as '\n'. NEVER use literal line breaks inside a JSON string.
 
 ### 💡 EXAMPLE RESEARCH PATH (Rotation Query):
-1. `web-search`: Search for rotation partners and FRAC groups in RU/EN.
-2. `postgresql`: Bulk query all potential partners found online in the local database to confirm they are 'Действует' and get their exact concentrations.
-3. `answer-chat`: Provide the structured verified list.
+1. **Turn 1 (Parallel Tools):** Send `web-search` (to find FRAC groups and rotation partners) AND `postgresql` (to get the base product profile) IN THE SAME RESPONSE.
+2. **Turn 2:** Bulk `postgresql` query to verify all potential partners found online to confirm they are 'Действует' and extract exact concentrations.
+3. **Turn 3:** `answer-chat`: Provide the structured verified list.
 
 OPERATIONAL RULES:
 - Internal reasoning: English plain text (NOT JSON).
@@ -173,49 +173,80 @@ OPERATIONAL RULES:
 ===============================================================================================
 
 [STEP 1] Requesting LiteLLM (gemini-3.1-flash-lite)...
-⏱️ Response received in 7.80s
-DEBUG: Full response object: ModelResponse(id='ftmtaaujCfjikdUP2PqFqAE', created=1773001078, model='gemini-3.1-flash-lite', object='chat.completion', system_fingerprint=None, choices=[Choices(finish_reason='stop', index=0, message=Message(content='Для борьбы с ложной мучнистой росой (пероноспорозом) на горохе мировой опыт и интернет-источники предлагают более широкий спектр решений, чем те, что официально зарегистрированы в РФ для этой конкретной культуры.\n\n**Важное предупреждение:** Информация ниже носит ознакомительный характер. Применение препаратов, не имеющих официальной регистрации на конкретной культуре в РФ, является нарушением регламента и может привести к гибели урожая, штрафам или превышению остаточных количеств пестицидов (MRL).\n\n### 🌐 Что говорит мировой опыт (Global Insights)\n\nВ международной практике (США, ЕС, Канада) для борьбы с оомицетами (к которым относится возбудитель пероноспороза *Peronospora viciae*) используются специализированные фунгициды, которые часто отсутствуют в российском списке для гороха:\n\n1.  **Металаксил / Мефеноксам (Metalaxyl / Mefenoxam):**\n    *   Это «золотой стандарт» против оомицетов. Часто используется для протравливания семян, чтобы предотвратить системное заражение.\n    *   *Статус в РФ:* Встречается в составе протравителей, но редко имеет регистрацию именно на горохе против пероноспороза.\n\n2.  **Флуазинам (Fluazinam):**\n    *   Контактный фунгицид, который эффективно подавляет спорообразование оомицетов. Часто используется в баковых смесях.\n\n3.  **Циазофамид (Cyazofamid):**\n    *   Специфический фунгицид против оомицетов. Очень популярен в Европе для защиты овощных культур, но на горохе применяется редко из-за высокой стоимости.\n\n4.  **Фосфиты (Фосфористая кислота / Фосфит калия):**\n    *   В мировом опыте часто используются как стимуляторы иммунитета и фунгициды против оомицетов. Они не убивают патоген напрямую, но активируют защитные механизмы растения (SAR — системная приобретенная устойчивость).\n\n### ⚠️ Почему официальный список в РФ такой короткий?\n1.  **Специфика регистрации:** Регистрация препарата на конкретную культуру стоит дорого. Производители часто регистрируют препараты на «массовые» культуры (пшеница, кукуруза, подсолнечник), игнорируя горох, если рынок сбыта кажется им недостаточно большим.\n2.  **Биология патогена:** Пероноспороз на горохе — это оомицет. Большинство фунгицидов, которые мы привыкли использовать (триазолы, стробилурины), работают против *истинных грибов*. Стробилурины (Азоксистробин, Пикоксистробин) — это редкое исключение, которое *частично* работает против оомицетов, поэтому они и попали в официальный список.\n\n### 💡 Резюме для практики\nЕсли вы столкнулись с пероноспорозом на горохе:\n*   **Официальный путь:** Используйте только зарегистрированные препараты (Интрада, Экселент). Помните, что стробилурины (Азоксистробин) лучше работают **профилактически**, до появления видимых симптомов.\n*   **Агротехнический путь (критически важен):**\n    *   Использование здорового семенного материала (инфекция часто передается с семенами).\n    *   Соблюдение севооборота (возврат гороха на поле не ранее чем через 4-5 лет).\n    *   Уничтожение падалицы гороха.\n    *   Выбор устойчивых сортов (это самый эффективный метод в мировой практике).\n\n**Хотите, чтобы я проверил, есть ли в базе данных РФ препараты с действующими веществами из мирового опыта (например, Металаксил), даже если они не зарегистрированы на горохе?** (Это поможет понять, можно ли найти их в составе комплексных протравителей).\n\n!@!{"tool": "answer-chat", "answer": "Для борьбы с ложной мучнистой росой (пероноспорозом) на горохе мировой опыт и интернет-источники предлагают более широкий спектр решений, чем те, что официально зарегистрированы в РФ для этой конкретной культуры.\\n\\n**Важное предупреждение:** Информация ниже носит ознакомительный характер. Применение препаратов, не имеющих официальной регистрации на конкретной культуре в РФ, является нарушением регламента и может привести к гибели урожая, штрафам или превышению остаточных количеств пестицидов (MRL).\\n\\n### 🌐 Что говорит мировой опыт (Global Insights)\\n\\nВ международной практике (США, ЕС, Канада) для борьбы с оомицетами (к которым относится возбудитель пероноспороза *Peronospora viciae*) используются специализированные фунгициды, которые часто отсутствуют в российском списке для гороха:\\n\\n1. **Металаксил / Мефеноксам (Metalaxyl / Mefenoxam):**\\n   - Это «золотой стандарт» против оомицетов. Часто используется для протравливания семян, чтобы предотвратить системное заражение.\\n   - *Статус в РФ:* Встречается в составе протравителей, но редко имеет регистрацию именно на горохе против пероноспороза.\\n\\n2. **Флуазинам (Fluazinam):**\\n   - Контактный фунгицид, который эффективно подавляет спорообразование оомицетов. Часто используется в баковых смесях.\\n\\n3. **Циазофамид (Cyazofamid):**\\n   - Специфический фунгицид против оомицетов. Очень популярен в Европе для защиты овощных культур, но на горохе применяется редко из-за высокой стоимости.\\n\\n4. **Фосфиты (Фосфористая кислота / Фосфит калия):**\\n   - В мировом опыте часто используются как стимуляторы иммунитета и фунгициды против оомицетов. Они не убивают патоген напрямую, но активируют защитные механизмы растения (SAR — системная приобретенная устойчивость).\\n\\n### ⚠️ Почему официальный список в РФ такой короткий?\\n1. **Специфика регистрации:** Регистрация препарата на конкретную культуру стоит дорого. Производители часто регистрируют препараты на «массовые» культуры (пшеница, кукуруза, подсолнечник), игнорируя горох, если рынок сбыта кажется им недостаточно большим.\\n2. **Биология патогена:** Пероноспороз на горохе — это оомицет. Большинство фунгицидов, которые мы привыкли использовать (триазолы, стробилурины), работают против *истинных грибов*. Стробилурины (Азоксистробин, Пикоксистробин) — это редкое исключение, которое *частично* работает против оомицетов, поэтому они и попали в официальный список.\\n\\n### 💡 Резюме для практики\\nЕсли вы столкнулись с пероноспорозом на горохе:\\n* **Официальный путь:** Используйте только зарегистрированные препараты (Интрада, Экселент). Помните, что стробилурины (Азоксистробин) лучше работают **профилактически**, до появления видимых симптомов.\\n* **Агротехнический путь (критически важен):**\\n  - Использование здорового семенного материала (инфекция часто передается с семенами).\\n  - Соблюдение севооборота (возврат гороха на поле не ранее чем через 4-5 лет).\\n  - Уничтожение падалицы гороха.\\n  - Выбор устойчивых сортов (это самый эффективный метод в мировой практике).\\n\\n**Хотите, чтобы я проверил, есть ли в базе данных РФ препараты с действующими веществами из мирового опыта (например, Металаксил), даже если они не зарегистрированы на горохе?** (Это поможет понять, можно ли найти их в составе комплексных протравителей)."}!@!', role='assistant', tool_calls=None, function_call=None, images=[], thinking_blocks=[], provider_specific_fields={'thought_signatures': ['EvwECvkEAb4+9vsSGR9iFXjQTMIgfLGFckugBn6UaWg9MHymLXvxzyreehAjYtEhw05yZjJenPBJJNVAakEqbfxVYz5Qx8ruz4I08pRZg66qkZlfDxypcYd7A7C3V9rCoCdvKkThhso0NZHRVBpb0WVhRYvRdOpUQ29LQAEJJ7GQZMrVaKYOkLQQmuHy/ryOsKO0VJTG9EwhF44UJT5eEJK1scS3QgSLQINIE+RZ5hJ8zSAsdcvUyhRjSEM6z3IQxKEbzjVa0nwV67RGlnojjxYb7wJ03Rj+Q0ANkrFoO0+yy2GARKNaEbYIZgO0YZAiNL8Vqfiv7Jl/4d8AWeu7Fvuxetljt542HznxuOnS6HURN9/O8yU56XG59igN3NDiDUs59Smt7z/6azSD+PYJN5/Ed1PoNRrEtKHdBCDtbL/sWxxD0moOzcrHg8xhVS9U1YOTOdnmBubVxFDHCeKoHQ+LbDoEvFvH2Wlu5Zw2c8oAoHpZd+W5ushNvOv/wLm1DtBhSd4cjq5t6zqY0eyTHGZbTesK++WtIfdL+9h7EN1JQzhodF0TjrdfpJ/sbbXfZ2UQoZLY3yUDDUcFWJ2nyVPG3bbyXpzFYS0eZcbKcnWHH2iBPGWuUzM6RIfYw3ygYC2HjMarEt2ffsEAaxcNazpMUuTMkF6bScZA8+vR2nsa75c7dUBohV7A4+l1cLp2po/z6hoZpKySF8x3Lwc/3ai/uFmQIfeFOOEP2HRhhE36ncYnj77gv2kQ+24nA6L5YYYl7PVZIdhi7D+jZungGidOUu5yeHWpVWB2jFZfrmVOHkuRfnOjzVKOXMKTV+GSVaNYnKpdqnw0tiXYF1Wv'], 'refusal': None, 'thinking_blocks': []}), provider_specific_fields={})], usage=Usage(completion_tokens=2038, prompt_tokens=6039, total_tokens=8077, completion_tokens_details=CompletionTokensDetailsWrapper(accepted_prediction_tokens=None, audio_tokens=None, reasoning_tokens=133, rejected_prediction_tokens=None, text_tokens=1905, image_tokens=None), prompt_tokens_details=PromptTokensDetailsWrapper(audio_tokens=None, cached_tokens=None, text_tokens=6039, image_tokens=None)), service_tier=None, vertex_ai_grounding_metadata=[], vertex_ai_url_context_metadata=[], vertex_ai_safety_results=[], vertex_ai_citation_metadata=[])
+⏱️ Response received in 2.24s
+DEBUG: Full response object: ModelResponse(id='rtutaZf_CvTMkdUPpvTIiAY', created=1773001643, model='gemini-3.1-flash-lite', object='chat.completion', system_fingerprint=None, choices=[Choices(finish_reason='stop', index=0, message=Message(content='!@!{"tool": "postgresql", "query": "SELECT p.naimenovanie, p.registrant, p.deystvuyushchee_veshchestvo, p.status, p.srok_reg, pp.kultura, pp.vrednyy_obekt, pp.norma, pp.osobennosti FROM reestr.pestitsidy p LEFT JOIN reestr.pestitsidy_primeneniya pp ON p.nomer_reg = pp.nomer_reg WHERE p.naimenovanie ILIKE \'%Виртуоз%\' AND p.status = \'Действует\'"}!@!\n!@!{"tool": "web-search", "query": "препарат Виртуоз действующие вещества FRAC группа"}!@!', role='assistant', tool_calls=None, function_call=None, images=[], thinking_blocks=[], provider_specific_fields={'thought_signatures': ['EtQDCtEDAb4+9vuacyFvwx+VhnJxI7zA5wQU3ynrT316ITyT4QHN/ZaqBr101XOKvBFfkKRmi8SeYiBzbdkXy8xV/7jGmvMK9s5O5anBboHME2k0WCNAP5MflnkKoXI4COXsNPWS0RJMTYjX/Q3haZpP6xVGg5Oj6zH5JY/qLE3uEHcKOnffMJ/KXE2Ro3M1QmhtQhLLKa1Y615FaOrCyZPFEGqFiMLZHYhVIzZ9w+z/rrueZZPF5eDfz8o7z2xnMMUJLDFKNTbZkMluXvk3kLrHK4q6iEtLCRS5unOlUOawfBoMlWhEMctuhF05wCdcgvHd+Ohp4FEElnUj9F1hXWXckqZgpyKxaWtyLrUNAUjR9ZPGsHU3MlT0VjtAwmHUYnQrQa8nN9vnSckFB/LUVfEOCy2pfMmYBfAwaVR9ALbCVsLffIDe3CQRmZ8OER10uSqIumxIOSv9lDQnPyyI/1Hl4fUIn/OYXV4D5ELJiyspxVs9r5XQi0fsaJ6nT4HN48tCbEh51wj228nN5UaDT8f2V9Oq/bUST/oCPCklJQswpeA1ZQL/6t8Y1nrguZoy6kimJq1xGA8eVrv6S7B/hIGajJCepdxVSpP26Tr8BRhpT3UhLV0R'], 'refusal': None, 'thinking_blocks': []}), provider_specific_fields={})], usage=Usage(completion_tokens=284, prompt_tokens=2888, total_tokens=3172, completion_tokens_details=CompletionTokensDetailsWrapper(accepted_prediction_tokens=None, audio_tokens=None, reasoning_tokens=115, rejected_prediction_tokens=None, text_tokens=169, image_tokens=None), prompt_tokens_details=PromptTokensDetailsWrapper(audio_tokens=None, cached_tokens=None, text_tokens=2888, image_tokens=None)), service_tier=None, vertex_ai_grounding_metadata=[], vertex_ai_url_context_metadata=[], vertex_ai_safety_results=[], vertex_ai_citation_metadata=[])
 
 ------------------------------------------------------------
 [AGENT THOUGHTS / RESPONSE]
-Для борьбы с ложной мучнистой росой (пероноспорозом) на горохе мировой опыт и интернет-источники предлагают более широкий спектр решений, чем те, что официально зарегистрированы в РФ для этой конкретной культуры.
-
-**Важное предупреждение:** Информация ниже носит ознакомительный характер. Применение препаратов, не имеющих официальной регистрации на конкретной культуре в РФ, является нарушением регламента и может привести к гибели урожая, штрафам или превышению остаточных количеств пестицидов (MRL).
-
-### 🌐 Что говорит мировой опыт (Global Insights)
-
-В международной практике (США, ЕС, Канада) для борьбы с оомицетами (к которым относится возбудитель пероноспороза *Peronospora viciae*) используются специализированные фунгициды, которые часто отсутствуют в российском списке для гороха:
-
-1.  **Металаксил / Мефеноксам (Metalaxyl / Mefenoxam):**
-    *   Это «золотой стандарт» против оомицетов. Часто используется для протравливания семян, чтобы предотвратить системное заражение.
-    *   *Статус в РФ:* Встречается в составе протравителей, но редко имеет регистрацию именно на горохе против пероноспороза.
-
-2.  **Флуазинам (Fluazinam):**
-    *   Контактный фунгицид, который эффективно подавляет спорообразование оомицетов. Часто используется в баковых смесях.
-
-3.  **Циазофамид (Cyazofamid):**
-    *   Специфический фунгицид против оомицетов. Очень популярен в Европе для защиты овощных культур, но на горохе применяется редко из-за высокой стоимости.
-
-4.  **Фосфиты (Фосфористая кислота / Фосфит калия):**
-    *   В мировом опыте часто используются как стимуляторы иммунитета и фунгициды против оомицетов. Они не убивают патоген напрямую, но активируют защитные механизмы растения (SAR — системная приобретенная устойчивость).
-
-### ⚠️ Почему официальный список в РФ такой короткий?
-1.  **Специфика регистрации:** Регистрация препарата на конкретную культуру стоит дорого. Производители часто регистрируют препараты на «массовые» культуры (пшеница, кукуруза, подсолнечник), игнорируя горох, если рынок сбыта кажется им недостаточно большим.
-2.  **Биология патогена:** Пероноспороз на горохе — это оомицет. Большинство фунгицидов, которые мы привыкли использовать (триазолы, стробилурины), работают против *истинных грибов*. Стробилурины (Азоксистробин, Пикоксистробин) — это редкое исключение, которое *частично* работает против оомицетов, поэтому они и попали в официальный список.
-
-### 💡 Резюме для практики
-Если вы столкнулись с пероноспорозом на горохе:
-*   **Официальный путь:** Используйте только зарегистрированные препараты (Интрада, Экселент). Помните, что стробилурины (Азоксистробин) лучше работают **профилактически**, до появления видимых симптомов.
-*   **Агротехнический путь (критически важен):**
-    *   Использование здорового семенного материала (инфекция часто передается с семенами).
-    *   Соблюдение севооборота (возврат гороха на поле не ранее чем через 4-5 лет).
-    *   Уничтожение падалицы гороха.
-    *   Выбор устойчивых сортов (это самый эффективный метод в мировой практике).
-
-**Хотите, чтобы я проверил, есть ли в базе данных РФ препараты с действующими веществами из мирового опыта (например, Металаксил), даже если они не зарегистрированы на горохе?** (Это поможет понять, можно ли найти их в составе комплексных протравителей).
-
-!@!{"tool": "answer-chat", "answer": "Для борьбы с ложной мучнистой росой (пероноспорозом) на горохе мировой опыт и интернет-источники предлагают более широкий спектр решений, чем те, что официально зарегистрированы в РФ для этой конкретной культуры.\n\n**Важное предупреждение:** Информация ниже носит ознакомительный характер. Применение препаратов, не имеющих официальной регистрации на конкретной культуре в РФ, является нарушением регламента и может привести к гибели урожая, штрафам или превышению остаточных количеств пестицидов (MRL).\n\n### 🌐 Что говорит мировой опыт (Global Insights)\n\nВ международной практике (США, ЕС, Канада) для борьбы с оомицетами (к которым относится возбудитель пероноспороза *Peronospora viciae*) используются специализированные фунгициды, которые часто отсутствуют в российском списке для гороха:\n\n1. **Металаксил / Мефеноксам (Metalaxyl / Mefenoxam):**\n   - Это «золотой стандарт» против оомицетов. Часто используется для протравливания семян, чтобы предотвратить системное заражение.\n   - *Статус в РФ:* Встречается в составе протравителей, но редко имеет регистрацию именно на горохе против пероноспороза.\n\n2. **Флуазинам (Fluazinam):**\n   - Контактный фунгицид, который эффективно подавляет спорообразование оомицетов. Часто используется в баковых смесях.\n\n3. **Циазофамид (Cyazofamid):**\n   - Специфический фунгицид против оомицетов. Очень популярен в Европе для защиты овощных культур, но на горохе применяется редко из-за высокой стоимости.\n\n4. **Фосфиты (Фосфористая кислота / Фосфит калия):**\n   - В мировом опыте часто используются как стимуляторы иммунитета и фунгициды против оомицетов. Они не убивают патоген напрямую, но активируют защитные механизмы растения (SAR — системная приобретенная устойчивость).\n\n### ⚠️ Почему официальный список в РФ такой короткий?\n1. **Специфика регистрации:** Регистрация препарата на конкретную культуру стоит дорого. Производители часто регистрируют препараты на «массовые» культуры (пшеница, кукуруза, подсолнечник), игнорируя горох, если рынок сбыта кажется им недостаточно большим.\n2. **Биология патогена:** Пероноспороз на горохе — это оомицет. Большинство фунгицидов, которые мы привыкли использовать (триазолы, стробилурины), работают против *истинных грибов*. Стробилурины (Азоксистробин, Пикоксистробин) — это редкое исключение, которое *частично* работает против оомицетов, поэтому они и попали в официальный список.\n\n### 💡 Резюме для практики\nЕсли вы столкнулись с пероноспорозом на горохе:\n* **Официальный путь:** Используйте только зарегистрированные препараты (Интрада, Экселент). Помните, что стробилурины (Азоксистробин) лучше работают **профилактически**, до появления видимых симптомов.\n* **Агротехнический путь (критически важен):**\n  - Использование здорового семенного материала (инфекция часто передается с семенами).\n  - Соблюдение севооборота (возврат гороха на поле не ранее чем через 4-5 лет).\n  - Уничтожение падалицы гороха.\n  - Выбор устойчивых сортов (это самый эффективный метод в мировой практике).\n\n**Хотите, чтобы я проверил, есть ли в базе данных РФ препараты с действующими веществами из мирового опыта (например, Металаксил), даже если они не зарегистрированы на горохе?** (Это поможет понять, можно ли найти их в составе комплексных протравителей)."}!@!
+!@!{"tool": "postgresql", "query": "SELECT p.naimenovanie, p.registrant, p.deystvuyushchee_veshchestvo, p.status, p.srok_reg, pp.kultura, pp.vrednyy_obekt, pp.norma, pp.osobennosti FROM reestr.pestitsidy p LEFT JOIN reestr.pestitsidy_primeneniya pp ON p.nomer_reg = pp.nomer_reg WHERE p.naimenovanie ILIKE '%Виртуоз%' AND p.status = 'Действует'"}!@!
+!@!{"tool": "web-search", "query": "препарат Виртуоз действующие вещества FRAC группа"}!@!
 ------------------------------------------------------------
 
-✅ FINAL ANSWER DELIVERED (Total time: 7.80s)
+------------------------------------------------------------
+[AGENT SQL QUERY]
+SELECT p.naimenovanie, p.registrant, p.deystvuyushchee_veshchestvo, p.status, p.srok_reg, pp.kultura, pp.vrednyy_obekt, pp.norma, pp.osobennosti FROM reestr.pestitsidy p LEFT JOIN reestr.pestitsidy_primeneniya pp ON p.nomer_reg = pp.nomer_reg WHERE p.naimenovanie ILIKE '%Виртуоз%' AND p.status = 'Действует'
+------------------------------------------------------------
+
+------------------------------------------------------------
+[AGENT SQL RESULT]
+[
+  {
+    "naimenovanie": "Виртуоз",
+    "registrant": "ООО «Ярило», 1083123001500",
+    "deystvuyushchee_veshchestvo": [
+      {
+        "veshchestvo": "Пропиконазол",
+        "koncentraciya": "250"
+      },
+      {
+        "veshchestvo": "Ципроконазол",
+        "koncentraciya": "80"
+      }
+    ],
+    "status": "Действует",
+    "srok_reg": "16.09.2026",
+    "kultura": "Пшеница яровая и озимая",
+    "vrednyy_obekt": "Ржавчина бурая, ржавчина стеблевая, ржавчина желтая, мучнистая роса, септориоз листьев, пиренофороз",
+    "norma": "0,4-0,5",
+    "osobennosti": ""
+  },
+  {
+    "naimenovanie": "Виртуоз",
+    "registrant": "ООО «Ярило», 1083123001500",
+    "deystvuyushchee_veshchestvo": [
+      {
+        "veshchestvo": "Пропиконазол",
+        "koncentraciya": "250"
+      },
+      {
+        "veshchestvo": "Ципроконазол",
+        "koncentraciya": "80"
+      }
+    ],
+    "status": "Действует",
+    "srok_reg": "16.09.2026",
+    "kultura": "Ячмень яровой, озимый",
+    "vrednyy_obekt": "Гельмин...
+------------------------------------------------------------
+
+------------------------------------------------------------
+[AGENT WEB SEARCH]
+препарат Виртуоз действующие вещества FRAC группа
+------------------------------------------------------------
+
+------------------------------------------------------------
+[AGENT SEARCH RESULT]
+Received 9115 chars from Tavily
+------------------------------------------------------------
+
+[STEP 2] Requesting LiteLLM (gemini-3.1-flash-lite)...
+⏱️ Response received in 6.94s
+DEBUG: Full response object: ModelResponse(id='ttutabWvHoiEkdUPv8Ww-AU', created=1773001647, model='gemini-3.1-flash-lite', object='chat.completion', system_fingerprint=None, choices=[Choices(finish_reason='stop', index=0, message=Message(content='!@!{"tool": "answer-chat", "answer": "### 📄 Профиль препарата: Виртуоз\\n\\n- 🏢 **Регистратор:** ООО «Ярило»\\n- 🧬 **Состав (ДВ):** Пропиконазол (250 г/л) + Ципроконазол (80 г/л)\\n- 📅 **Статус:** Действует до <code>16.09.2026</code>\\n- 🧪 **Химический класс:** Триазолы (FRAC 3, DMI-фунгициды)\\n\\n---\\n\\n### 🚜 Регламент применения (Официальные данные):\\n\\n• <b>Пшеница яровая и озимая:</b>\\n  - <b>Вредный объект:</b> Ржавчина (бурая, стеблевая, желтая), мучнистая роса, септориоз листьев, пиренофороз.\\n  - <b>Норма расхода:</b> <code>0,4–0,5 л/га</code>\\n\\n• <b>Ячмень яровой и озимый:</b>\\n  - <b>Вредный объект:</b> Гельминтоспориозные пятнистости (темно-бурая, сетчатая, полосатая), мучнистая роса, ржавчины (карликовая, бурая, стеблевая), ринхоспориоз.\\n  - <b>Норма расхода:</b> <code>0,4–0,5 л/га</code>\\n\\n• <b>Рожь озимая:</b>\\n  - <b>Вредный объект:</b> Мучнистая роса, ржавчины (бурая, стеблевая), септориоз.\\n  - <b>Норма расхода:</b> <code>0,4–0,5 л/га</code>\\n\\n• <b>Овес:</b>\\n  - <b>Вредный объект:</b> Красно-бурая пятнистость.\\n  - <b>Норма расхода:</b> <code>0,4–0,5 л/га</code>\\n\\n• <b>Свекла сахарная:</b>\\n  - <b>Вредный объект:</b> Церкоспороз, мучнистая роса.\\n  - <b>Норма расхода:</b> <code>0,5–0,7 л/га</code>\\n\\n---\\n\\n### 📦 Рекомендации для ротации и аналоги:\\n\\nПрепарат «Виртуоз» относится к группе **триазолов (FRAC 3)**. Для предотвращения развития резистентности (привыкания патогенов) крайне важно чередовать его с фунгицидами других химических групп:\\n\\n- **Рекомендуемая ротация:** Чередуйте с препаратами групп **SDHI (FRAC 7)** или **стробилуринов (FRAC 11)**.\\n- **Аналоги по действующим веществам:** На рынке присутствуют другие комбинированные препараты с аналогичным сочетанием пропиконазола и ципроконазола (например, «Альто Супер» и его дженерики), однако «Виртуоз» является самостоятельным зарегистрированным продуктом.\\n\\n🔎 Всего найдено <b>5</b> записей в реестре для данного препарата.\\n\\n---\\n\\n**Интерактивные предложения:**\\n- Найти препараты групп SDHI или стробилуринов для ротации с «Виртуозом»?\\n- Подобрать фунгициды с другими действующими веществами для защиты зерновых от септориоза?"}!@!', role='assistant', tool_calls=None, function_call=None, images=[], thinking_blocks=[], provider_specific_fields={'thought_signatures': ['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'], 'refusal': None, 'thinking_blocks': []}), provider_specific_fields={})], usage=Usage(completion_tokens=1495, prompt_tokens=7349, total_tokens=8844, completion_tokens_details=CompletionTokensDetailsWrapper(accepted_prediction_tokens=None, audio_tokens=None, reasoning_tokens=673, rejected_prediction_tokens=None, text_tokens=822, image_tokens=None), prompt_tokens_details=PromptTokensDetailsWrapper(audio_tokens=None, cached_tokens=None, text_tokens=7349, image_tokens=None)), service_tier=None, vertex_ai_grounding_metadata=[], vertex_ai_url_context_metadata=[], vertex_ai_safety_results=[], vertex_ai_citation_metadata=[])
+
+------------------------------------------------------------
+[AGENT THOUGHTS / RESPONSE]
+!@!{"tool": "answer-chat", "answer": "### 📄 Профиль препарата: Виртуоз\n\n- 🏢 **Регистратор:** ООО «Ярило»\n- 🧬 **Состав (ДВ):** Пропиконазол (250 г/л) + Ципроконазол (80 г/л)\n- 📅 **Статус:** Действует до <code>16.09.2026</code>\n- 🧪 **Химический класс:** Триазолы (FRAC 3, DMI-фунгициды)\n\n---\n\n### 🚜 Регламент применения (Официальные данные):\n\n• <b>Пшеница яровая и озимая:</b>\n  - <b>Вредный объект:</b> Ржавчина (бурая, стеблевая, желтая), мучнистая роса, септориоз листьев, пиренофороз.\n  - <b>Норма расхода:</b> <code>0,4–0,5 л/га</code>\n\n• <b>Ячмень яровой и озимый:</b>\n  - <b>Вредный объект:</b> Гельминтоспориозные пятнистости (темно-бурая, сетчатая, полосатая), мучнистая роса, ржавчины (карликовая, бурая, стеблевая), ринхоспориоз.\n  - <b>Норма расхода:</b> <code>0,4–0,5 л/га</code>\n\n• <b>Рожь озимая:</b>\n  - <b>Вредный объект:</b> Мучнистая роса, ржавчины (бурая, стеблевая), септориоз.\n  - <b>Норма расхода:</b> <code>0,4–0,5 л/га</code>\n\n• <b>Овес:</b>\n  - <b>Вредный объект:</b> Красно-бурая пятнистость.\n  - <b>Норма расхода:</b> <code>0,4–0,5 л/га</code>\n\n• <b>Свекла сахарная:</b>\n  - <b>Вредный объект:</b> Церкоспороз, мучнистая роса.\n  - <b>Норма расхода:</b> <code>0,5–0,7 л/га</code>\n\n---\n\n### 📦 Рекомендации для ротации и аналоги:\n\nПрепарат «Виртуоз» относится к группе **триазолов (FRAC 3)**. Для предотвращения развития резистентности (привыкания патогенов) крайне важно чередовать его с фунгицидами других химических групп:\n\n- **Рекомендуемая ротация:** Чередуйте с препаратами групп **SDHI (FRAC 7)** или **стробилуринов (FRAC 11)**.\n- **Аналоги по действующим веществам:** На рынке присутствуют другие комбинированные препараты с аналогичным сочетанием пропиконазола и ципроконазола (например, «Альто Супер» и его дженерики), однако «Виртуоз» является самостоятельным зарегистрированным продуктом.\n\n🔎 Всего найдено <b>5</b> записей в реестре для данного препарата.\n\n---\n\n**Интерактивные предложения:**\n- Найти препараты групп SDHI или стробилуринов для ротации с «Виртуозом»?\n- Подобрать фунгициды с другими действующими веществами для защиты зерновых от септориоза?"}!@!
+------------------------------------------------------------
+
+✅ FINAL ANSWER DELIVERED (Total time: 6.94s)
 ===============================================================================================

@@ -135,6 +135,8 @@ class RegistryAgent:
                     continue
 
                 final_answer = None
+                tool_results_combined = []
+                
                 for call_str in tool_calls:
                     try:
                         # Очищаем строку от возможных артефактов экранирования
@@ -164,13 +166,13 @@ class RegistryAgent:
                             query = call_data.get("query") or call_data.get('"query"')
                             if not query: raise ValueError("Missing 'query' parameter.")
                             result = await self.run_sql(query)
-                            messages.append({"role": "user", "content": f"TOOL RESULT (postgresql):\n{result}"})
+                            tool_results_combined.append(f"--- TOOL RESULT (postgresql) ---\n{result}")
                             
                         elif tool == "web-search":
                             query = call_data.get("query") or call_data.get('"query"')
                             if not query: raise ValueError("Missing 'query' parameter.")
                             result = await self.run_search(query)
-                            messages.append({"role": "user", "content": f"TOOL RESULT (web-search):\n{result}"})
+                            tool_results_combined.append(f"--- TOOL RESULT (web-search) ---\n{result}")
                             
                         elif tool == "answer-chat":
                             final_answer = call_data.get("answer") or call_data.get('"answer"')
@@ -179,16 +181,20 @@ class RegistryAgent:
                         else:
                             err_msg = f"Unknown tool '{tool}'."
                             self._log_step("ERROR", err_msg)
-                            messages.append({"role": "user", "content": err_msg})
+                            tool_results_combined.append(err_msg)
                             
                     except Exception as e:
                         err_msg = f"Tool call error: {str(e)}\nInput: {call_str[:100]}"
                         self._log_step("ERROR", err_msg)
-                        messages.append({"role": "user", "content": f"Your JSON tool call was invalid: {str(e)}. Please fix it."})
+                        tool_results_combined.append(f"Your JSON tool call was invalid: {str(e)}. Please fix it.")
                 
                 if final_answer:
                     self._to_log(f"\n✅ FINAL ANSWER DELIVERED (Total time: {time.time()-start_time:.2f}s)\n{'='*95}")
                     return final_answer
+                    
+                if tool_results_combined:
+                    combined_text = "\n\n".join(tool_results_combined)
+                    messages.append({"role": "user", "content": combined_text})
                 
             except Exception as e:
                 err_msg = f"⚠️ Agent Error: {str(e)}"
