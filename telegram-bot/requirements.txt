@@ -1,0 +1,7 @@
+﻿aiogram==3.13.1
+httpx[http2]
+python-dotenv
+cachetools
+litellm
+tavily-python
+psycopg2-binary
