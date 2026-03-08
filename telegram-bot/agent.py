@@ -63,7 +63,6 @@ class RegistryAgent:
         self._log_step("WEB SEARCH", query)
         try:
             results = self.tavily.search(query=query, search_depth="advanced", max_results=5)
-            # Tavily returns a dict with 'results' list containing 'title', 'url', 'content'
             formatted_results = []
             for r in results.get('results', []):
                 formatted_results.append(f"Title: {r.get('title')}\nContent: {r.get('content')}")
@@ -79,7 +78,6 @@ class RegistryAgent:
 
     async def process_message(self, message: str, history: List[Dict[str, str]]) -> str:
         """Основной цикл обработки сообщения (Reasoning Loop)"""
-        # Очищаем лог при каждом новом запросе (mode='w') и пишем шапку
         header = f"\n{'='*95}\n🚀 NEW AGENT SESSION | User: {message}\n"
         header += f"📊 MODEL: {self.model}\n"
         header += f"📊 CONTEXT INFO: Messages={len(history)+2}, System Prompt={len(self.system_prompt)} chars\n"
@@ -111,8 +109,6 @@ class RegistryAgent:
                 
                 duration = time.time() - start_time
                 self._to_log(f"⏱️ Response received in {duration:.2f}s")
-                
-                # Логируем полный объект ответа для диагностики
                 self._to_log(f"DEBUG: Full response object: {response}")
                 
                 response_text = response.choices[0].message.content or ""
@@ -127,53 +123,68 @@ class RegistryAgent:
                 self._log_step("THOUGHTS / RESPONSE", response_text)
                 messages.append({"role": "assistant", "content": response_text})
                 
-                tool_calls = re.findall(r'!@!({.*?})!@!', response_text, re.DOTALL)
+                # Ищем все блоки !@!{...}!@!
+                tool_calls = re.findall(r'!@!(.*?)!@!', response_text, re.DOTALL)
                 
                 if not tool_calls:
-                    self._to_log("⚠️ WARNING: No !@!{...}!@! format detected. Nudging model.")
+                    self._to_log("⚠️ WARNING: No !@! markers detected.")
                     messages.append({
                         "role": "user", 
-                        "content": "You didn't use the required !@!{\"tool\": \"...\"}!@! format. ALL actions and final answers MUST be executed via tools. If you are ready to answer the user, use the 'answer-chat' tool."
+                        "content": "You didn't use the required !@!{\"tool\": \"...\"}!@! format. ALL actions and final answers MUST be executed via tools."
                     })
                     continue
 
                 final_answer = None
                 for call_str in tool_calls:
                     try:
-                        call_data = json.loads(call_str)
+                        # Очищаем строку от возможных артефактов экранирования
+                        cleaned_call = call_str.strip()
+                        # Если модель прислала экранированный JSON внутри маркеров
+                        if cleaned_call.startswith('\\"'):
+                            cleaned_call = cleaned_call.replace('\\"', '"')
+                        
+                        # Декодируем JSON
+                        call_data = json.loads(cleaned_call)
+                        
+                        # Если это список (не должно быть, но на всякий случай)
+                        if isinstance(call_data, list) and len(call_data) > 0:
+                            call_data = call_data[0]
+
                         if not isinstance(call_data, dict):
-                            raise ValueError("JSON must be a dictionary object.")
+                            raise ValueError(f"JSON must be a dictionary, got {type(call_data)}")
                             
-                        tool = call_data.get("tool")
+                        # Извлекаем имя инструмента, игнорируя лишние кавычки в ключе
+                        tool = call_data.get("tool") or call_data.get('"tool"')
+                        
+                        if not tool:
+                            self._to_log(f"DEBUG: Missing 'tool' key in JSON: {cleaned_call}")
+                            raise KeyError("tool")
                         
                         if tool == "postgresql":
-                            query = call_data.get("query")
-                            if not query:
-                                raise ValueError("Missing 'query' parameter.")
+                            query = call_data.get("query") or call_data.get('"query"')
+                            if not query: raise ValueError("Missing 'query' parameter.")
                             result = await self.run_sql(query)
                             messages.append({"role": "user", "content": f"TOOL RESULT (postgresql):\n{result}"})
                             
                         elif tool == "web-search":
-                            query = call_data.get("query")
-                            if not query:
-                                raise ValueError("Missing 'query' parameter.")
+                            query = call_data.get("query") or call_data.get('"query"')
+                            if not query: raise ValueError("Missing 'query' parameter.")
                             result = await self.run_search(query)
                             messages.append({"role": "user", "content": f"TOOL RESULT (web-search):\n{result}"})
                             
                         elif tool == "answer-chat":
-                            final_answer = call_data.get("answer")
-                            if not final_answer:
-                                raise ValueError("Missing 'answer' parameter.")
+                            final_answer = call_data.get("answer") or call_data.get('"answer"')
+                            if not final_answer: raise ValueError("Missing 'answer' parameter.")
                             break
                         else:
-                            err_msg = f"Unknown tool '{tool}'. Allowed: 'postgresql', 'web-search', 'answer-chat'."
+                            err_msg = f"Unknown tool '{tool}'."
                             self._log_step("ERROR", err_msg)
                             messages.append({"role": "user", "content": err_msg})
                             
-                    except (json.JSONDecodeError, ValueError) as e:
-                        err_msg = f"Tool call error: {str(e)}\nProvided JSON: {call_str[:100]}"
+                    except Exception as e:
+                        err_msg = f"Tool call error: {str(e)}\nInput: {call_str[:100]}"
                         self._log_step("ERROR", err_msg)
-                        messages.append({"role": "user", "content": f"Your JSON tool call was invalid: {err_msg}. Please fix it."})
+                        messages.append({"role": "user", "content": f"Your JSON tool call was invalid: {str(e)}. Please fix it."})
                 
                 if final_answer:
                     self._to_log(f"\n✅ FINAL ANSWER DELIVERED (Total time: {time.time()-start_time:.2f}s)\n{'='*95}")
