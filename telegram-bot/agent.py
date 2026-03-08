@@ -130,7 +130,7 @@ class RegistryAgent:
                     self._to_log("⚠️ WARNING: No !@! markers detected.")
                     messages.append({
                         "role": "user", 
-                        "content": "You didn't use the required !@!{\"tool\": \"...\"}!@! format. ALL actions and final answers MUST be executed via tools."
+                        "content": "CRITICAL ERROR: You didn't use the required `!@!{\"tool\": \"...\"}!@!` format. Also, WARNING: Did you just try to answer from your internal memory without verifying every single product in `postgresql`? Do NOT just wrap your previous text in markers. You MUST verify concentrations and expiry dates in the database FIRST."
                     })
                     continue
 
