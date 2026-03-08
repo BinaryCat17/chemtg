@@ -7,56 +7,42 @@ import html
 
 def format_for_telegram(text: str) -> str:
     """
-    Преобразует Markdown в HTML для Telegram.
-    Безопасно обрабатывает жирный текст и таблицы.
+    Преобразует Markdown в безопасный HTML для Telegram.
+    Поддерживает жирный текст, курсив, моноширинный шрифт и списки.
     """
     if not text:
         return text
 
-    # 0. Экранируем HTML, чтобы Telegram не ругался на случайные < или >
+    # 1. Сначала очищаем текст от возможных "грязных" тегов, которые мог прислать агент (кроме разрешенных)
+    # Но для безопасности мы сначала экранируем ВСЁ, а потом восстановим нужные теги
     text = html.escape(text)
 
-    # 1. Жирный текст: заменяем **текст** на <b>текст</b>
-    # Используем максимально простое и экранированное выражение
+    # 2. Восстанавливаем теги, которые МЫ РАЗРЕШИЛИ агенту использовать в промпте
+    # (они уже экранированы как &lt;b&gt;, &lt;code&gt; и т.д.)
+    text = text.replace("&lt;b&gt;", "<b>").replace("&lt;/b&gt;", "</b>")
+    text = text.replace("&lt;i&gt;", "<i>").replace("&lt;/i&gt;", "</i>")
+    text = text.replace("&lt;code&gt;", "<code>").replace("&lt;/code&gt;", "</code>")
+    text = text.replace("&lt;pre&gt;", "<pre>").replace("&lt;/pre&gt;", "</pre>")
+
+    # 3. Обработка Markdown синтаксиса (на случай, если агент его пришлет вместо HTML)
+    
+    # Жирный: **text** -> <b>text</b>
     text = re.sub(r"\*\*(.*?)\*\*", r"<b>\1</b>", text)
     
-    # 2. Парсинг таблиц в карточки
-    lines = text.split('\n')
-    out_lines = []
-    in_table = False
-    headers = []
-    
-    for line in lines:
-        line_stripped = line.strip()
-        if line_stripped.startswith('|') and line_stripped.endswith('|'):
-            in_table = True
-            cells = [c.strip() for c in line_stripped.strip('|').split('|')]
-            
-            # Пропускаем разделители таблиц
-            if all(c.replace('-', '').replace(':', '').strip() == '' for c in cells):
-                continue
-            
-            if not headers:
-                # Очищаем заголовки от возможных тегов
-                headers = [re.sub(r"&lt;[^&]+&gt;", "", c) for c in cells]
-                continue
-            
-            out_lines.append("──────────────")
-            for i, cell in enumerate(cells):
-                header = headers[i] if i < len(headers) else f"Поле {i+1}"
-                if cell: 
-                    out_lines.append(f"▪️ <b>{header}:</b> {cell}")
-        else:
-            if in_table:
-                in_table = False
-                headers = []
-                out_lines.append("──────────────\n")
-            out_lines.append(line)
-            
-    if in_table:
-        out_lines.append("──────────────")
-        
-    return "\n".join(out_lines)
+    # Курсив: __text__ или *text* -> <i>text</i>
+    text = re.sub(r"__(.*?)__", r"<i>\1</i>", text)
+    # Осторожно с одиночными звездочками, они часто бывают в формулах или списках
+    # Используем только если вокруг текста есть пробелы или начало строки
+    text = re.sub(r"(?<!\w)\*(?!\s)(.+?)(?<!\s)\*(?!\w)", r"<i>\1</i>", text)
+
+    # Моноширинный (inline): `text` -> <code>text</code>
+    text = re.sub(r"`(.*?)`", r"<code>\1</code>", text)
+
+    # 4. Улучшение визуальных разделителей
+    # Если агент прислал длинную черту из дефисов или подчеркиваний, заменим на красивую
+    text = re.sub(r"[-_]{4,}", "────────────────", text)
+
+    return text.strip()
 
 async def is_admin(username: str) -> bool:
     if not username: return False
