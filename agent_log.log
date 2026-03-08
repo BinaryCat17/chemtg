@@ -2,7 +2,7 @@
 ===============================================================================================
 🚀 NEW AGENT SESSION | User: расскажи за препарат виртуоз
 📊 MODEL: gemini-3.1-flash-lite
-📊 CONTEXT INFO: Messages=2, System Prompt=9035 chars
+📊 CONTEXT INFO: Messages=2, System Prompt=9263 chars
 --- SYSTEM PROMPT START ---
 You are a high-performance Autonomous AI Agent. Your primary goal is to provide factually accurate and verified information by orchestrating local database queries and global web searches.
 
@@ -94,42 +94,47 @@ You are a Proactive Expert Analyst of the "State Register of Pesticides and Agro
 **Honesty & Transparency Rule:** If you cannot find a product, if a query returns no results, or if data is incomplete, state it clearly. Never "fill the gaps" with guesses. Transparency about limitations is highly respected.
 
 ### 🔬 CORE OPERATIONAL POLICY (STRICT):
-1. **Web-Search is for Discovery ONLY:** Information found via 'web-search' is considered UNVERIFIED DRAFT.
-2. **DB Status Values:** Use `status = 'Действует'` for active records and `status = 'Не действует'` for expired ones.
-3. **Mandatory DB Verification:** You are STRICTLY FORBIDDEN from mentioning any Russian product name in your final answer unless you have FIRST queried it in the 'postgresql' database to confirm its:
+1. **Product Inquiry Logic:** If the user asks about a SPECIFIC product (e.g., "Tell me about Virtuoz"), your priority is to provide its FULL official profile using data from BOTH `reestr.pestitsidy` and `reestr.pestitsidy_primeneniya`. Analogs are secondary.
+2. **Web-Search is for Discovery ONLY:** Information found via 'web-search' is considered UNVERIFIED DRAFT.
+3. **DB Status Values:** Use `status = 'Действует'` for active records and `status = 'Не действует'` for expired ones.
+4. **Mandatory DB Verification:** You are STRICTLY FORBIDDEN from mentioning any Russian product name in your final answer unless you have FIRST queried it in the 'postgresql' database to confirm its:
    - Official Name (naimenovanie)
    - Registrant (registrant) - clean from "LLC", "JSC", etc.
    - Active Ingredients with Concentrations (from deystvuyushchee_veshchestvo)
    - Status (must be 'Действует')
    - Expiry Date (srok_reg)
-4. **Verification Loop:** After 'web-search' provides potential analogs, your NEXT step MUST be a 'postgresql' query (use Bulk Querying) to check these specific names in the registry.
-5. **Database = Final Authority:** If a product found online is NOT in the DB or 'Не действует', you must state that it is not registered in the RF. Never present a web result as an official RF registration.
-6. **No Metadata Cloning:** Never copy registration dates, numbers (nomer_reg), or statuses from one product to another. 
-7. **No Invention:** You are FORBIDDEN from inventing or "guessing" registration numbers, concentrations, or manufacturers. If the DB doesn't provide it, state "Данные в реестре отсутствуют".
-8. **Discrepancy Rule:** If 'web-search' contradicts the database, the DATABASE is always right. Ignore the web finding for the final answer.
-9. **No Jumping to Web-Search:** You are FORBIDDEN from using 'web-search' until you have first performed a `postgresql` search for the target Active Ingredients (AI) combination in the local database.
-10. **Search Priority (Sequential):**
+5. **Verification Loop:** After 'web-search' provides potential analogs, your NEXT step MUST be a 'postgresql' query (use Bulk Querying) to check these specific names in the registry.
+6. **Database = Final Authority:** If a product found online is NOT in the DB or 'Не действует', you must state that it is not registered in the RF. Never present a web result as an official RF registration.
+7. **No Metadata Cloning:** Never copy registration dates, numbers (nomer_reg), or statuses from one product to another. 
+8. **No Invention:** You are FORBIDDEN from inventing or "guessing" registration numbers, concentrations, or manufacturers. If the DB doesn't provide it, state "Данные в реестре отсутствуют".
+9. **Discrepancy Rule:** If 'web-search' contradicts the database, the DATABASE is always right. Ignore the web finding for the final answer.
+10. **No Jumping to Web-Search:** You are FORBIDDEN from using 'web-search' until you have first performed a `postgresql` search for the target Active Ingredients (AI) combination in the local database.
+11. **Search Priority (Sequential):**
    - **Step 1: Точные аналоги** (Идентичные ДВ).
    - **Step 2: Похожие комбинации** (Целевые ДВ + доп. компоненты).
    - **Step 3: Стратегические альтернативы** (Другие ДВ, тот же механизм действия или цель).
 
 ### 📊 STRUCTURED OUTPUT (NO TABLES, MINIMAL WATER):
-Organize data ONLY in the following block format. Do NOT use Markdown tables.
-- **📦 Точные аналоги (Верифицировано):** [Название] | [Фирма] | [ДВ + Концентрация] | [Срок рег.]
-- **🧪 Похожие комбинации (Верифицировано):** [Название] | [Фирма] | [ДВ + Концентрация] | [Срок рег.]
-- **📈 Стратегические альтернативы (Механизм действия):** Предложите группы ДВ (напр., "Вместо триазолов рассмотрите SDHI").
-- **🌍 Мировой опыт:** Полезная информация о зарубежных ДВ, зарегистрированных в РФ.
+1. **📄 Профиль препарата [Название]:**
+   - **Регистратор:** [Фирма] (без ООО/LLC)
+   - **Состав:** [ДВ + Концентрация]
+   - **Статус:** [Статус] до [Дата]
+2. **🚜 Регламент применения (Кратко):**
+   - Перечислите основные культуры, нормы расхода и целевые вредные объекты.
+3. **📦 Аналоги и альтернативы:**
+   - **Точные аналоги (Верифицировано):** [Название] | [Фирма] | [ДВ] | [Срок рег.]
+   - **Похожие комбинации (Верифицировано):** [Название] | [Фирма] | [ДВ] | [Срок рег.]
+- **📈 Стратегические альтернативы:** Предложите группы ДВ (напр., "Вместо триазолов рассмотрите SDHI").
 
 ### 🤝 INTERACTIVITY & NEXT STEPS (MANDATORY):
-At the end of every answer, provide 1-2 brief "Интерактивных предложения":
+End with 1-2 brief "Интерактивных предложения":
+- "Показать подробную таблицу норм расхода для всех культур?"
 - "Найти все препараты, содержащие [Действующее вещество]?"
-- "Проверить нормы расхода (норма) для [Название препарата]?"
-- "Расширить поиск на всю группу вредителей [Группа]?"
+- "Проверить нормы расхода для [Название препарата]?"
 
 ### 🔴 DATA QUALITY & SQL:
-- **Clean Names:** Remove "LLC", "JSC", "PJSC" and extra quotes from names.
-- **Data Completeness:** Every product MUST show its specific concentrations (e.g., 85 г/л + 62.5 г/л).
-- **SQL Efficiency:** Use `ILIKE ANY(ARRAY['%A%', '%B%'])` for batch checks.
+- **Clean Names:** Remove legal prefixes and extra quotes.
+- **SQL Efficiency:** Use `ILIKE ANY(ARRAY['%A%', '%B%'])` for batch checks. Use JOINs between `pestitsidy` and `pestitsidy_primeneniya` when a product profile is needed.
 
 ### 🇷🇺 FINAL OUTPUT LANGUAGE:
 Natural, professional Russian. Use '\n' for newlines in JSON. No conversational filler.
@@ -137,18 +142,20 @@ Natural, professional Russian. Use '\n' for newlines in JSON. No conversational 
 ### ⚠️ TECHNICAL RULE for JSON:
 When using 'answer-chat', ensure all newlines in the 'answer' string are properly escaped as '\n'. NEVER use literal line breaks inside a JSON string.
 
-### 💡 EXAMPLE RESEARCH PATH:
-1. `postgresql`: Identify target product AI (Active Ingredients) and concentrations.
+### 💡 EXAMPLE RESEARCH PATH (Product Inquiry):
+1. `postgresql`: Query `pestitsidy` for basic data AND `pestitsidy_primeneniya` for crops/rates.
+2. `answer-chat`: Provide full profile + Application details.
+
+### 💡 EXAMPLE RESEARCH PATH (Analog Search):
+1. `postgresql`: Identify target AI.
 2. `postgresql`: BULK SEARCH the database for all products containing ALL target AI first.
-3. `web-search`: If few results, look for international analogs (translate AI names to English).
-4. `postgresql`: BATCH VERIFY any names found in Step 3 using `ILIKE ANY(ARRAY['%Analog1%', '%Analog2%'])` to check all found names in the RF registry.
-5. `answer-chat`: Deliver the verified block-list + Interactive Proposals.
+3. `web-search`: If few results, look for international analogs.
+4. `postgresql`: BATCH VERIFY names found via web.
+5. `answer-chat`: Deliver the verified block-list.
 
 **Example for "Abakus Prime":** 
 - DB search "Абакус Прайм" -> Get AI (Pyraclostrobin + Epoxiconazole). 
 - DB search for ALL products with (Pyraclostrobin AND Epoxiconazole) -> Find "Кристалл", "Цериакс Плюс", etc.
-- Web-search global analogs only if needed. 
-- DB batch verify any new names found via web.
 - Final Russian answer via answer-chat.
 
 OPERATIONAL RULES:
@@ -159,35 +166,19 @@ OPERATIONAL RULES:
 ===============================================================================================
 
 [STEP 1] Requesting LiteLLM (gemini-3.1-flash-lite)...
-⏱️ Response received in 1.78s
-DEBUG: Full response object: ModelResponse(id='VsStaYGfIebVkdUPjKzsmAg', created=1772995668, model='gemini-3.1-flash-lite', object='chat.completion', system_fingerprint=None, choices=[Choices(finish_reason='stop', index=0, message=Message(content='{\n  "reasoning": "I need to find the pesticide \'Виртуоз\' in the database to verify its registration status, active ingredients, and manufacturer. After that, I will look for analogs with the same active ingredients.",\n  "tool_calls": [\n    {\n      "tool": "postgresql",\n      "query": "SELECT naimenovanie, registrant, deystvuyushchee_veshchestvo, status, srok_reg FROM reestr.pestitsidy WHERE naimenovanie ILIKE \'%Виртуоз%\'"\n    }\n  ]\n}', role='assistant', tool_calls=None, function_call=None, images=[], thinking_blocks=[], provider_specific_fields={'thought_signatures': ['EqoECqcEAb4+9vvhtWqRQFyEVfyoxOup0DqbuPUk7vy1kzbBHLPKCGaYNqp5BsasaBlP6FbkUyCHg0jtaXn3Y3yMiITyQH8FiYeoY+r/99SELT6Jswz+hkW7yGcIGn0AWcn278673wpRE2iD02U6sklQQMTwRNe9+B1AjmL+lw0KSyZKQCWZAETqbJJwh/gjixyVKvYz0HXqDH9+4mX3+EgFKuHR0bg4CJkiRFSj2+c750gzpWQ2C9rtt4Qv1lHEPA20wc8/HE3ezamUru74NSTYSfXso8VyfZ77PP88czJ7uzPQfbSbZW4GRj4aX0th5n0vjVUPfizKn1rvuJ/VYLlLqv1Bht52MpOo/66s/wHCjjn7Gs84uxGznBhFuM1xFDufX+uAwknonyCgudzW8zLWvSGYRqeEh2NDhjfjgVLvsbMwMM19BVRLJwKXbLjMRN8FNRSZt3jvzZP/CHAvBJ6iFz4gBqWrUOgs0liXRAFh3hkOdP1ewl7KY31YlYbPEEn2N4We/BCE5N9pvVUwS9TwCQiIi1jY2x5V2Sj0gM2h0n1IFArQOHLAjLVJISbmvhYI+whxZMuP4ApR808PrmNJwKM7j9PScEhourRzwR8vU5vauhXP1SmwVDJQ/euucvwZ1YWhL9oXTSG8dr1jiJeni/GlAfgbjnwhYKimSvWIslKWSIZcXytfX6yHke9fZLiSlGi98Fug8osMY5X1tWqZpVaY2hrET5qjOCU='], 'refusal': None, 'thinking_blocks': []}), provider_specific_fields={})], usage=Usage(completion_tokens=249, prompt_tokens=2545, total_tokens=2794, completion_tokens_details=CompletionTokensDetailsWrapper(accepted_prediction_tokens=None, audio_tokens=None, reasoning_tokens=123, rejected_prediction_tokens=None, text_tokens=126, image_tokens=None), prompt_tokens_details=PromptTokensDetailsWrapper(audio_tokens=None, cached_tokens=None, text_tokens=2545, image_tokens=None)), service_tier=None, vertex_ai_grounding_metadata=[], vertex_ai_url_context_metadata=[], vertex_ai_safety_results=[], vertex_ai_citation_metadata=[])
+⏱️ Response received in 2.30s
+DEBUG: Full response object: ModelResponse(id='QcWtabvCNqyAkdUPrNCZ6QY', created=1772995903, model='gemini-3.1-flash-lite', object='chat.completion', system_fingerprint=None, choices=[Choices(finish_reason='stop', index=0, message=Message(content='I will search for the product "Виртуоз" in the database to retrieve its official registration details, active ingredients, and application regulations.\n\n!@!{"tool": "postgresql", "query": "SELECT p.naimenovanie, p.registrant, p.deystvuyushchee_veshchestvo, p.status, p.srok_reg, pp.kultura, pp.vrednyy_obekt, pp.norma, pp.osobennosti FROM reestr.pestitsidy p LEFT JOIN reestr.pestitsidy_primeneniya pp ON p.nomer_reg = pp.nomer_reg WHERE p.naimenovanie ILIKE \'%Виртуоз%\'"}!@!', role='assistant', tool_calls=None, function_call=None, images=[], thinking_blocks=[], provider_specific_fields={'thought_signatures': ['EuMDCuADAb4+9vt9MhBUsTDinhTvOCrUbYkuVAUIbJB6mZjmliHnWaWXOJrnyWfaLSZQd7ZxogO4zalUpOZSLPXpHQNxNP8fOVI1Ae0UolM0YXWX76Os34bk4Pn6RRGqD9APPvhwzYw2NdfowxKG1nDLEbWFhf9UYb/klyUL9PrUWgitlmNngz2lSOFWhlmwZTnLasv2XT2ZxipG30iU74HgLBO1ZmHDnVHhOwCS6uRGUO6X3yTN1Sdm5cjjvn6nAGT4jIlUy1eUZn/iWdzk5s97LByYOmA6Gx+1diqoINlH5NTbRY4Skn6D/2590FcXNB+QoX4+AywuGJ/Uou84it0W0h1z1UE7HZE7hbHH+4oCBTOn1OhDipkRsM9G8smGBRGGX4llFWAr1imjM+CFXm3Fp5bJRpJHSqsFRRnGppS8v8KLVhRKyPu3IplI0pk55a2FbE4SpHwidzr1nMonnrINebviro70nHKBrUOt0RbbS1oP7xnBYDQUfP229b+JbZ2ICuMasss8xJK/DQIGl5Fh0NpaMM+wTyuYMwqID9dFJNzxEGyB/BOKVdtVI0QnOJv2Mw1KHdDD6axGSsQPpnSwnOcnornabiKoGtxKQcaE7usr8SUdqpnvv4gIKuZqZr68ADGK'], 'refusal': None, 'thinking_blocks': []}), provider_specific_fields={})], usage=Usage(completion_tokens=267, prompt_tokens=2622, total_tokens=2889, completion_tokens_details=CompletionTokensDetailsWrapper(accepted_prediction_tokens=None, audio_tokens=None, reasoning_tokens=110, rejected_prediction_tokens=None, text_tokens=157, image_tokens=None), prompt_tokens_details=PromptTokensDetailsWrapper(audio_tokens=None, cached_tokens=None, text_tokens=2622, image_tokens=None)), service_tier=None, vertex_ai_grounding_metadata=[], vertex_ai_url_context_metadata=[], vertex_ai_safety_results=[], vertex_ai_citation_metadata=[])
 
 ------------------------------------------------------------
 [AGENT THOUGHTS / RESPONSE]
-{
-  "reasoning": "I need to find the pesticide 'Виртуоз' in the database to verify its registration status, active ingredients, and manufacturer. After that, I will look for analogs with the same active ingredients.",
-  "tool_calls": [
-    {
-      "tool": "postgresql",
-      "query": "SELECT naimenovanie, registrant, deystvuyushchee_veshchestvo, status, srok_reg FROM reestr.pestitsidy WHERE naimenovanie ILIKE '%Виртуоз%'"
-    }
-  ]
-}
-------------------------------------------------------------
-⚠️ WARNING: No !@!{...}!@! format detected. Nudging model.
+I will search for the product "Виртуоз" in the database to retrieve its official registration details, active ingredients, and application regulations.
 
-[STEP 2] Requesting LiteLLM (gemini-3.1-flash-lite)...
-⏱️ Response received in 1.85s
-DEBUG: Full response object: ModelResponse(id='WMStaZGwGazu7M8PmLr6oAY', created=1772995670, model='gemini-3.1-flash-lite', object='chat.completion', system_fingerprint=None, choices=[Choices(finish_reason='stop', index=0, message=Message(content='!@!{"tool": "postgresql", "query": "SELECT naimenovanie, registrant, deystvuyushchee_veshchestvo, status, srok_reg FROM reestr.pestitsidy WHERE naimenovanie ILIKE \'%Виртуоз%\'"}!@!', role='assistant', tool_calls=None, function_call=None, images=[], thinking_blocks=[], provider_specific_fields={'thought_signatures': ['Eo4ECosEAb4+9vuKeCwxZVqxnMhIVxLJgDr6fnGEhcoy7QFagzXGb/oG7Pf+Ggl+jsuwTkbXbD41VnqUrteqhDsIiI6LhIRIRBdtdvjz0WdCknWt/FFeosJcgEiznT9jPo00Emx6kWFsug+ZhIr7BW1Kg01s45syCT5F7gSZ5SxgHxAW2yde+tKFH+lUQc2mZE+lL38XbhLn3YIaZ4GqNEeupb9WsAG7mxVIwB9Ecta9XcsBnu6dzR6C/l+KFEkWSNwMfIoq7jJUKcNh5+XqsFGL6vHeXsDnEGlOUJp85lBwlW8FrO5bAezJcoYX7/vxu+L5Pafooc933AXirrCNgf/KgjOC8lBVzyfn+l3pxQp11t8J/YxW86DuZxE9Y/ZEQ5H33A8S5enWZXxHC64JV/eSRKom1oB/Xm+VqkAbqBmxDDMVG31fAxg43B7obYRnsW+OMwT9VRXbNzoNfn86UIHrubTUuf4lxWd7AGVeFud5pJf4s27DWKItSZ+4GqDMnRSQdcX7pCjzytP0u/9Vr6Wzz7GoRZ6dcYwJG7ivQeeG8IQbcVdciZidiD93pEJUIpwQT5LtWhKTJWh0FQM+tngyvM8wjpjnxRXXw+BcjRWH2CFsNEaTeQPqBi5HwyikVwZFphjNkszMsAOMwbULNIWQT5sawxTr2MeV7xfxbutfEvo2aRlUfZkqKHHGU6xVJg=='], 'refusal': None, 'thinking_blocks': []}), provider_specific_fields={})], usage=Usage(completion_tokens=180, prompt_tokens=2722, total_tokens=2902, completion_tokens_details=CompletionTokensDetailsWrapper(accepted_prediction_tokens=None, audio_tokens=None, reasoning_tokens=119, rejected_prediction_tokens=None, text_tokens=61, image_tokens=None), prompt_tokens_details=PromptTokensDetailsWrapper(audio_tokens=None, cached_tokens=None, text_tokens=2722, image_tokens=None)), service_tier=None, vertex_ai_grounding_metadata=[], vertex_ai_url_context_metadata=[], vertex_ai_safety_results=[], vertex_ai_citation_metadata=[])
-
-------------------------------------------------------------
-[AGENT THOUGHTS / RESPONSE]
-!@!{"tool": "postgresql", "query": "SELECT naimenovanie, registrant, deystvuyushchee_veshchestvo, status, srok_reg FROM reestr.pestitsidy WHERE naimenovanie ILIKE '%Виртуоз%'"}!@!
+!@!{"tool": "postgresql", "query": "SELECT p.naimenovanie, p.registrant, p.deystvuyushchee_veshchestvo, p.status, p.srok_reg, pp.kultura, pp.vrednyy_obekt, pp.norma, pp.osobennosti FROM reestr.pestitsidy p LEFT JOIN reestr.pestitsidy_primeneniya pp ON p.nomer_reg = pp.nomer_reg WHERE p.naimenovanie ILIKE '%Виртуоз%'"}!@!
 ------------------------------------------------------------
 
 ------------------------------------------------------------
 [AGENT SQL QUERY]
-SELECT naimenovanie, registrant, deystvuyushchee_veshchestvo, status, srok_reg FROM reestr.pestitsidy WHERE naimenovanie ILIKE '%Виртуоз%'
+SELECT p.naimenovanie, p.registrant, p.deystvuyushchee_veshchestvo, p.status, p.srok_reg, pp.kultura, pp.vrednyy_obekt, pp.norma, pp.osobennosti FROM reestr.pestitsidy p LEFT JOIN reestr.pestitsidy_primeneniya pp ON p.nomer_reg = pp.nomer_reg WHERE p.naimenovanie ILIKE '%Виртуоз%'
 ------------------------------------------------------------
 
 ------------------------------------------------------------
@@ -207,23 +198,45 @@ SELECT naimenovanie, registrant, deystvuyushchee_veshchestvo, status, srok_reg F
       }
     ],
     "status": "Действует",
-    "srok_reg": "16.09.2026"
-  }
-]
+    "srok_reg": "16.09.2026",
+    "kultura": "Пшеница яровая и озимая",
+    "vrednyy_obekt": "Ржавчина бурая, ржавчина стеблевая, ржавчина желтая, мучнистая роса, септориоз листьев, пиренофороз",
+    "norma": "0,4-0,5",
+    "osobennosti": ""
+  },
+  {
+    "naimenovanie": "Виртуоз",
+    "registrant": "ООО «Ярило», 1083123001500",
+    "deystvuyushchee_veshchestvo": [
+      {
+        "veshchestvo": "Пропиконазол",
+        "koncentraciya": "250"
+      },
+      {
+        "veshchestvo": "Ципроконазол",
+        "koncentraciya": "80"
+      }
+    ],
+    "status": "Действует",
+    "srok_reg": "16.09.2026",
+    "kultura": "Ячмень яровой, озимый",
+    "vrednyy_obekt": "Гельмин...
 ------------------------------------------------------------
 
-[STEP 3] Requesting LiteLLM (gemini-3.1-flash-lite)...
-⏱️ Response received in 1.39s
-DEBUG: Full response object: ModelResponse(id='WcStafjiNPHikdUPtrymyAE', created=1772995672, model='gemini-3.1-flash-lite', object='chat.completion', system_fingerprint=None, choices=[Choices(finish_reason='stop', index=0, message=Message(content='!@!{"tool": "postgresql", "query": "SELECT naimenovanie, registrant, deystvuyushchee_veshchestvo, srok_reg FROM reestr.pestitsidy WHERE status = \'Действует\' AND deystvuyushchee_veshchestvo @> \'[{\\"veshchestvo\\": \\"Пропиконазол\\", \\"koncentraciya\\": \\"250\\"}, {\\"veshchestvo\\": \\"Ципроконазол\\", \\"koncentraciya\\": \\"80\\"}]\'::jsonb AND naimenovanie NOT ILIKE \'%Виртуоз%\'"}!@!', role='assistant', tool_calls=None, function_call=None, images=[], thinking_blocks=[], provider_specific_fields={'thought_signatures': ['Ep4ECpsEAb4+9vsk/TMHMFJrzucu/frDtcpAYO8aaHsVuOcewpXgblaMr0p1w/ZsCA10qgTBzEXMFvXTGVK/EaSN9byQPToCtIaLYJ9w/IRFpJFC89tSciWpIdTACBTzSVoBjLkUv6mjthJ1YUJI/BFS5CB7MMfcd7+TvBrFEOv7pHfqVcfSxmYv7u0JSvpXAujtL9nsdI7Sp0ysYMjK8Rno++ct05HsEiQ6NOwtWcAxlNz1Z0Krg99Kku/E4q3dv0I2n1mqecjj4atNHpuEf5YJvKLFRKCl5Sq1qJkfYjPu8IaY3XSGc6iJ/t5NiPGP9rj8camk4HgOFJ5yLLAzyjigYw8eSDS0XlzxkfIcPoH2Hk9vTq90MiebSCaqQ3JUURRnCA4smCdodw30/fKmo6W2tnoBVPWesEP1Y2P7vJvXfKjgG7vIvT4pbaApwzXxb/s60RIMbOcaTcF6muQN0BIIaSKEzoRmwEFXwwvI8D0NejPtkT6U6/x9kRoo+U33TXjCwC1H1MwV1o1DNoGRaf9NAn1vUCSIbXuEhuX0Td9dKgwWTFpNBaQ2epOflCprvL/8USxEuU8EUrqAPnwg61SE7d3mbEYckJAKs7GLd7OCNgHRiFn3iaHOT7nDC7muBQFnEB6RHpFT7bttwx/KkHvy/eDKsNw484DXSgI8wCzEFT4v7E9bxf0Bicvw4bLCdacnUFe1PNYqzMq9xLUAAuE='], 'refusal': None, 'thinking_blocks': []}), provider_specific_fields={})], usage=Usage(completion_tokens=279, prompt_tokens=2959, total_tokens=3238, completion_tokens_details=CompletionTokensDetailsWrapper(accepted_prediction_tokens=None, audio_tokens=None, reasoning_tokens=140, rejected_prediction_tokens=None, text_tokens=139, image_tokens=None), prompt_tokens_details=PromptTokensDetailsWrapper(audio_tokens=None, cached_tokens=None, text_tokens=2959, image_tokens=None)), service_tier=None, vertex_ai_grounding_metadata=[], vertex_ai_url_context_metadata=[], vertex_ai_safety_results=[], vertex_ai_citation_metadata=[])
+[STEP 2] Requesting LiteLLM (gemini-3.1-flash-lite)...
+⏱️ Response received in 3.28s
+DEBUG: Full response object: ModelResponse(id='RcWtaevpDq-ZkdUPr82BiQk', created=1772995905, model='gemini-3.1-flash-lite', object='chat.completion', system_fingerprint=None, choices=[Choices(finish_reason='stop', index=0, message=Message(content='I have retrieved the profile for "Виртуоз". Now I will search for verified analogs with the same active ingredients (Propiconazole 250 g/l + Cyproconazole 80 g/l) to provide a complete answer.\n\n!@!{"tool": "postgresql", "query": "SELECT naimenovanie, registrant, srok_reg FROM reestr.pestitsidy WHERE deystvuyushchee_veshchestvo @> \'[{\\"veshchestvo\\": \\"Пропиконазол\\", \\"koncentraciya\\": \\"250\\"}, {\\"veshchestvo\\": \\"Ципроконазол\\", \\"koncentraciya\\": \\"80\\"}]\' AND naimenovanie != \'Виртуоз\' AND status = \'Действует\' LIMIT 5"}!@!', role='assistant', tool_calls=None, function_call=None, images=[], thinking_blocks=[], provider_specific_fields={'thought_signatures': ['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'], 'refusal': None, 'thinking_blocks': []}), provider_specific_fields={})], usage=Usage(completion_tokens=742, prompt_tokens=4013, total_tokens=4755, completion_tokens_details=CompletionTokensDetailsWrapper(accepted_prediction_tokens=None, audio_tokens=None, reasoning_tokens=565, rejected_prediction_tokens=None, text_tokens=177, image_tokens=None), prompt_tokens_details=PromptTokensDetailsWrapper(audio_tokens=None, cached_tokens=None, text_tokens=4013, image_tokens=None)), service_tier=None, vertex_ai_grounding_metadata=[], vertex_ai_url_context_metadata=[], vertex_ai_safety_results=[], vertex_ai_citation_metadata=[])
 
 ------------------------------------------------------------
 [AGENT THOUGHTS / RESPONSE]
-!@!{"tool": "postgresql", "query": "SELECT naimenovanie, registrant, deystvuyushchee_veshchestvo, srok_reg FROM reestr.pestitsidy WHERE status = 'Действует' AND deystvuyushchee_veshchestvo @> '[{\"veshchestvo\": \"Пропиконазол\", \"koncentraciya\": \"250\"}, {\"veshchestvo\": \"Ципроконазол\", \"koncentraciya\": \"80\"}]'::jsonb AND naimenovanie NOT ILIKE '%Виртуоз%'"}!@!
+I have retrieved the profile for "Виртуоз". Now I will search for verified analogs with the same active ingredients (Propiconazole 250 g/l + Cyproconazole 80 g/l) to provide a complete answer.
+
+!@!{"tool": "postgresql", "query": "SELECT naimenovanie, registrant, srok_reg FROM reestr.pestitsidy WHERE deystvuyushchee_veshchestvo @> '[{\"veshchestvo\": \"Пропиконазол\", \"koncentraciya\": \"250\"}, {\"veshchestvo\": \"Ципроконазол\", \"koncentraciya\": \"80\"}]' AND naimenovanie != 'Виртуоз' AND status = 'Действует' LIMIT 5"}!@!
 ------------------------------------------------------------
 
 ------------------------------------------------------------
 [AGENT SQL QUERY]
-SELECT naimenovanie, registrant, deystvuyushchee_veshchestvo, srok_reg FROM reestr.pestitsidy WHERE status = 'Действует' AND deystvuyushchee_veshchestvo @> '[{"veshchestvo": "Пропиконазол", "koncentraciya": "250"}, {"veshchestvo": "Ципроконазол", "koncentraciya": "80"}]'::jsonb AND naimenovanie NOT ILIKE '%Виртуоз%'
+SELECT naimenovanie, registrant, srok_reg FROM reestr.pestitsidy WHERE deystvuyushchee_veshchestvo @> '[{"veshchestvo": "Пропиконазол", "koncentraciya": "250"}, {"veshchestvo": "Ципроконазол", "koncentraciya": "80"}]' AND naimenovanie != 'Виртуоз' AND status = 'Действует' LIMIT 5
 ------------------------------------------------------------
 
 ------------------------------------------------------------
@@ -232,57 +245,39 @@ SELECT naimenovanie, registrant, deystvuyushchee_veshchestvo, srok_reg FROM rees
   {
     "naimenovanie": "Пропишанс Супер",
     "registrant": "ООО \"ШАНС\", 1093668046812",
-    "deystvuyushchee_veshchestvo": [
-      {
-        "veshchestvo": "Пропиконазол",
-        "koncentraciya": "250"
-      },
-      {
-        "veshchestvo": "Ципроконазол",
-        "koncentraciya": "80"
-      }
-    ],
     "srok_reg": "02.05.2034"
   },
   {
     "naimenovanie": "Ранголи-Ципрос",
     "registrant": "ООО «РАНГОЛИ», 1157746217848",
-    "deystvuyushchee_veshchestvo": [
-      {
-        "veshchestvo": "Пропиконазол",
-        "koncentraciya": "250"
-      },
-      {
-        "veshchestvo": "Ципроконазол",
-        "koncentraciya": "80"
-      }
-    ],
     "srok_reg": "16.01.2027"
   },
   {
     "naimenovanie": "Фильтерр",
     "registrant": "ООО ГК «ЗемлякоФФ», 1037724060560",
-    "deystvuyushchee_veshchestvo": [
-      {
-        "veshchestvo": "Пропиконазол",
-        "koncentraciya": "250"
-      },
-      {
-        "veshchestvo": "Ципроконазол",
-        "koncentraciya": "80"
-      }
-    ],
-    "sr...
+    "srok_reg": "10.12.2029"
+  },
+  {
+    "naimenovanie": "Атлант Супер",
+    "registrant": "ООО «АНПП «Агрохим-XXI», 1027700119710",
+    "srok_reg": "15.02.2027"
+  },
+  {
+    "naimenovanie": "Цимус Прогресс",
+    "registrant": "ООО «ЛИСТЕРРА», 1057749556930",
+    "srok_reg": "15.11.2031"
+  }
+]
 ------------------------------------------------------------
 
-[STEP 4] Requesting LiteLLM (gemini-3.1-flash-lite)...
-⏱️ Response received in 4.75s
-DEBUG: Full response object: ModelResponse(id='XsStaebtKrfinsEP9I2u0Ao', created=1772995673, model='gemini-3.1-flash-lite', object='chat.completion', system_fingerprint=None, choices=[Choices(finish_reason='stop', index=0, message=Message(content='!@!{"tool": "answer-chat", "answer": "Препарат «Виртуоз» является зарегистрированным фунгицидом системного действия. Ниже представлена информация на основе данных Государственного каталога пестицидов и агрохимикатов РФ.\\n\\n**📦 Точные аналоги (Верифицировано):**\\nПрепараты с идентичным составом (Пропиконазол 250 г/л + Ципроконазол 80 г/л):\\n- Альто Супер | Сингента | Пропиконазол 250 г/л + Ципроконазол 80 г/л | 26.11.2034\\n- Альтазол | Техноэкспорт | Пропиконазол 250 г/л + Ципроконазол 80 г/л | 28.08.2035\\n- Пропишанс Супер | Шанс | Пропиконазол 250 г/л + Ципроконазол 80 г/л | 02.05.2034\\n- Цимус Прогресс | Листерра | Пропиконазол 250 г/л + Ципроконазол 80 г/л | 15.11.2031\\n- Фильтерр | ГК ЗемлякоФФ | Пропиконазол 250 г/л + Ципроконазол 80 г/л | 10.12.2029\\n- Профи Супер | АГРус | Пропиконазол 250 г/л + Ципроконазол 80 г/л | 14.07.2030\\n- Альпари | АгроХимИнвест | Пропиконазол 250 г/л + Ципроконазол 80 г/л | 22.11.2033\\n- Тузол | Агромир | Пропиконазол 250 г/л + Ципроконазол 80 г/л | 28.11.2032\\n- Ранголи-Ципрос | Ранголи | Пропиконазол 250 г/л + Ципроконазол 80 г/л | 16.01.2027\\n- Атлант Супер | АНПП Агрохим-XXI | Пропиконазол 250 г/л + Ципроконазол 80 г/л | 15.02.2027\\n- Калибел | Белин | Пропиконазол 250 г/л + Ципроконазол 80 г/л | 25.01.2027\\n- Фунгисил | Эллипсагро | Пропиконазол 250 г/л + Ципроконазол 80 г/л | 28.01.2029\\n\\n**🧪 Похожие комбинации (Верифицировано):**\\nВ реестре представлено множество препаратов с данной комбинацией триазолов, что делает их взаимозаменяемыми при выборе стратегии защиты зерновых культур.\\n\\n**📈 Стратегические альтернативы (Механизм действия):**\\nЕсли требуется смена действующих веществ (например, при развитии резистентности), рассмотрите препараты из групп:\\n- SDHI (ингибиторы сукцинатдегидрогеназы) — например, на основе бензовиндифлупира или седаксана.\\n- Стробилурины (в смесях с триазолами) — для усиления лечебного и профилактического эффекта.\\n\\n**🌍 Мировой опыт:**\\nКомбинация пропиконазола и ципроконазола является классическим стандартом для борьбы с широким спектром листовых болезней зерновых (ржавчина, септориоз, пятнистости) благодаря синергии двух триазолов с разной скоростью проникновения и длительностью действия.\\n\\n**Интерактивные предложения:**\\n- Проверить нормы расхода (норма) для препарата «Виртуоз»?\\n- Найти все препараты, содержащие только «Пропиконазол»?"}!@!', role='assistant', tool_calls=None, function_call=None, images=[], thinking_blocks=[], provider_specific_fields={'thought_signatures': ['EvgDCvUDAb4+9vsTcNoMW9sYdaMgxRPOSISMX7rcNQZwcz4lW9yRaQ55OepBfKW0DtO9d2J+mB1Eb0i3UAH7JM7b5+jF9JUpFMPm/tCRqlFWjKC+7dD7Xf7zm6gdv13Rf69UES3HfdN8Mj5H/tUY8nx2wXMeP3wO+lZ+xk+SmuOQ1dw5gPdTBP5sYs2dc0Yg+MKYWbwqxF7FOCwt/JZqNhB1oyyej1+QLQb0rUe4gUjxXDtGwLkcRx1XSLNTDCGuaA8Qhm1iTs5eP3PQ+xr3USzAy6m/vrnqOr9LdV8347j8ya3m5MAkLg/Zdv2bvb8MhSY+i35B9h78ro4iFbi/U9IMQtlcdWApfFiMJsGWHZPvrGqaVydCdy75lGpvPulEUdTXbPHKX56DLMTqIBnjTRkz2BuNsM0toDWGsF++Uuv4Rjfz/uxawVBWLWh2K3yiNPB9kwNLcIG5TdPJmpsD8zXJOSYhR9w9Jd5dwHwMX+Z7aSntgr5BWHAVFQCFUlUU/UOgmIOyIngPq4MVleYUbnaJmUfE4p8a4fd/ZI4ihuSnz4aOXKsqYvjVIN4ZjHPPg38q136fOLEhR3JpTTT+SM381tJAXIt0BP3NTAfcthU3Z8nppuynqXaPyhRyCR/s8ZHMzqvecXV19AwPyujq4MfL5vHPVyWt1sMD'], 'refusal': None, 'thinking_blocks': []}), provider_specific_fields={})], usage=Usage(completion_tokens=1113, prompt_tokens=5161, total_tokens=6274, completion_tokens_details=CompletionTokensDetailsWrapper(accepted_prediction_tokens=None, audio_tokens=None, reasoning_tokens=114, rejected_prediction_tokens=None, text_tokens=999, image_tokens=None), prompt_tokens_details=PromptTokensDetailsWrapper(audio_tokens=None, cached_tokens=None, text_tokens=5161, image_tokens=None)), service_tier=None, vertex_ai_grounding_metadata=[], vertex_ai_url_context_metadata=[], vertex_ai_safety_results=[], vertex_ai_citation_metadata=[])
+[STEP 3] Requesting LiteLLM (gemini-3.1-flash-lite)...
+⏱️ Response received in 4.58s
+DEBUG: Full response object: ModelResponse(id='ScWtabeBNuzNnsEPsP2tqAo', created=1772995909, model='gemini-3.1-flash-lite', object='chat.completion', system_fingerprint=None, choices=[Choices(finish_reason='stop', index=0, message=Message(content='!@!{"tool": "answer-chat", "answer": "📄 **Профиль препарата Виртуоз:**\\n- **Регистратор:** Ярило\\n- **Состав:** Пропиконазол (250 г/л) + Ципроконазол (80 г/л)\\n- **Статус:** Действует до 16.09.2026\\n\\n🚜 **Регламент применения (Кратко):**\\nПрепарат является системным фунгицидом широкого спектра действия.\\n- **Зерновые (пшеница, ячмень, рожь, овес):** Применяется против ржавчины (бурой, стеблевой, желтой, карликовой), мучнистой росы, септориоза, пиренофороза, гельминтоспориозных пятнистостей и ринхоспориоза. Норма расхода: 0,4–0,5 л/га.\\n- **Свекла сахарная:** Применяется против церкоспороза и мучнистой росы. Норма расхода: 0,5–0,7 л/га.\\n\\n📦 **Аналоги и альтернативы:**\\nНиже представлены препараты с идентичным составом (Пропиконазол 250 г/л + Ципроконазол 80 г/л), зарегистрированные в РФ:\\n- **Пропишанс Супер** | ШАНС | до 02.05.2034\\n- **Ранголи-Ципрос** | РАНГОЛИ | до 16.01.2027\\n- **Фильтерр** | ГК «ЗемлякоФФ» | до 10.12.2029\\n- **Атлант Супер** | АНПП «Агрохим-XXI» | до 15.02.2027\\n- **Цимус Прогресс** | ЛИСТЕРРА | до 15.11.2031\\n\\n📈 **Стратегические альтернативы:**\\nЕсли требуется смена механизма действия (например, при развитии резистентности к триазолам), рассмотрите препараты на основе SDHI-фунгицидов (например, содержащие бензовиндифлупир или седаксан) или стробилуринов.\\n\\nИнтерактивные предложения:\\n- Показать подробную таблицу норм расхода для всех культур?\\n- Найти все препараты, содержащие Пропиконазол?"}!@!', role='assistant', tool_calls=None, function_call=None, images=[], thinking_blocks=[], provider_specific_fields={'thought_signatures': ['EsUFCsIFAb4+9vuctdKekFC+qAAfV+trlNNojpApE0bgfaOPB0Q0aoUJrzIo5ePRnU43oDRT0MQx0XnxKMLrd6uyC9a3GlaCP233DhCxL4TBy9ZfnhBM6oqz2ZqhmA3hHY7ylyNPjDyaleMkBO0vfwcUgUIgYPfnQKAC4O+kaSxSYVJLRPCZhHzobhG1CwP6eWcWsvDUk48f4pknXYvbN3DdTHdP6PVXWmc7uHd7ZP57MYzR69FS2O3JBZYybiLNwu8JLx3R/6+qAJCk9wJF86dqWxPXg92CfBRQ3cJt7K8hJsQvyLNE5kIW86EBQn045/oZw0XnZjijTOXgd6JxdzPfA0xJqlvnOkrHjiCHtl3LeMIkxJ6prWj/GHQJsFlkaKNnU2JR/50xkLP0Zc0O786nNokXaZX0PhQTs5sKsg/Wm9pRX64NiEroaM/CAf3nktlUZG1Z9NdsTmw6aejOue3DyzCnNXBToWwp3pYloYwxTZm0l3zS6AWJb2VA73Aa03fJdGn9cG/kqd79u8vw4DlAkENehOvmqaZTtd8+wORFFCsUcvswXRuCp0h0bbf1KgV9fPC0fCKWMe8WT48J25Vj/N+pdBEf7Zg//H0IeNsuuAAG4EwL//zQopoKSfHGrd8oB7KfZa+WoaaZ3Fuoa6uv5ZoUb21ViTgJIxTDbrhchZlY4DaoKdTy01dEOHoCM78dqwqG2R0rZ1Iv0yUt9uxHp1L/ejKQoSVQmHQ4NRoA25ob9jTh8Em7eHQe2/AGmuhB+kMJtQMOk2Bec1VvaCmC40qSZIIrfzvQde2kyO02TPl2rrrKx5K7lXvQg2puVaf7UqQDtMsN1ifjM+1pLV46qqat1B7DLGXCX3lkt6OHh6/1QUtefCRx9+mhUeB1mqEDBsD/P1EOdalJCwb203wJnr39QFg46+SgDhh1hPqjUIyMMC/xEA=='], 'refusal': None, 'thinking_blocks': []}), provider_specific_fields={})], usage=Usage(completion_tokens=750, prompt_tokens=4562, total_tokens=5312, completion_tokens_details=CompletionTokensDetailsWrapper(accepted_prediction_tokens=None, audio_tokens=None, reasoning_tokens=158, rejected_prediction_tokens=None, text_tokens=592, image_tokens=None), prompt_tokens_details=PromptTokensDetailsWrapper(audio_tokens=None, cached_tokens=None, text_tokens=4562, image_tokens=None)), service_tier=None, vertex_ai_grounding_metadata=[], vertex_ai_url_context_metadata=[], vertex_ai_safety_results=[], vertex_ai_citation_metadata=[])
 
 ------------------------------------------------------------
 [AGENT THOUGHTS / RESPONSE]
-!@!{"tool": "answer-chat", "answer": "Препарат «Виртуоз» является зарегистрированным фунгицидом системного действия. Ниже представлена информация на основе данных Государственного каталога пестицидов и агрохимикатов РФ.\n\n**📦 Точные аналоги (Верифицировано):**\nПрепараты с идентичным составом (Пропиконазол 250 г/л + Ципроконазол 80 г/л):\n- Альто Супер | Сингента | Пропиконазол 250 г/л + Ципроконазол 80 г/л | 26.11.2034\n- Альтазол | Техноэкспорт | Пропиконазол 250 г/л + Ципроконазол 80 г/л | 28.08.2035\n- Пропишанс Супер | Шанс | Пропиконазол 250 г/л + Ципроконазол 80 г/л | 02.05.2034\n- Цимус Прогресс | Листерра | Пропиконазол 250 г/л + Ципроконазол 80 г/л | 15.11.2031\n- Фильтерр | ГК ЗемлякоФФ | Пропиконазол 250 г/л + Ципроконазол 80 г/л | 10.12.2029\n- Профи Супер | АГРус | Пропиконазол 250 г/л + Ципроконазол 80 г/л | 14.07.2030\n- Альпари | АгроХимИнвест | Пропиконазол 250 г/л + Ципроконазол 80 г/л | 22.11.2033\n- Тузол | Агромир | Пропиконазол 250 г/л + Ципроконазол 80 г/л | 28.11.2032\n- Ранголи-Ципрос | Ранголи | Пропиконазол 250 г/л + Ципроконазол 80 г/л | 16.01.2027\n- Атлант Супер | АНПП Агрохим-XXI | Пропиконазол 250 г/л + Ципроконазол 80 г/л | 15.02.2027\n- Калибел | Белин | Пропиконазол 250 г/л + Ципроконазол 80 г/л | 25.01.2027\n- Фунгисил | Эллипсагро | Пропиконазол 250 г/л + Ципроконазол 80 г/л | 28.01.2029\n\n**🧪 Похожие комбинации (Верифицировано):**\nВ реестре представлено множество препаратов с данной комбинацией триазолов, что делает их взаимозаменяемыми при выборе стратегии защиты зерновых культур.\n\n**📈 Стратегические альтернативы (Механизм действия):**\nЕсли требуется смена действующих веществ (например, при развитии резистентности), рассмотрите препараты из групп:\n- SDHI (ингибиторы сукцинатдегидрогеназы) — например, на основе бензовиндифлупира или седаксана.\n- Стробилурины (в смесях с триазолами) — для усиления лечебного и профилактического эффекта.\n\n**🌍 Мировой опыт:**\nКомбинация пропиконазола и ципроконазола является классическим стандартом для борьбы с широким спектром листовых болезней зерновых (ржавчина, септориоз, пятнистости) благодаря синергии двух триазолов с разной скоростью проникновения и длительностью действия.\n\n**Интерактивные предложения:**\n- Проверить нормы расхода (норма) для препарата «Виртуоз»?\n- Найти все препараты, содержащие только «Пропиконазол»?"}!@!
+!@!{"tool": "answer-chat", "answer": "📄 **Профиль препарата Виртуоз:**\n- **Регистратор:** Ярило\n- **Состав:** Пропиконазол (250 г/л) + Ципроконазол (80 г/л)\n- **Статус:** Действует до 16.09.2026\n\n🚜 **Регламент применения (Кратко):**\nПрепарат является системным фунгицидом широкого спектра действия.\n- **Зерновые (пшеница, ячмень, рожь, овес):** Применяется против ржавчины (бурой, стеблевой, желтой, карликовой), мучнистой росы, септориоза, пиренофороза, гельминтоспориозных пятнистостей и ринхоспориоза. Норма расхода: 0,4–0,5 л/га.\n- **Свекла сахарная:** Применяется против церкоспороза и мучнистой росы. Норма расхода: 0,5–0,7 л/га.\n\n📦 **Аналоги и альтернативы:**\nНиже представлены препараты с идентичным составом (Пропиконазол 250 г/л + Ципроконазол 80 г/л), зарегистрированные в РФ:\n- **Пропишанс Супер** | ШАНС | до 02.05.2034\n- **Ранголи-Ципрос** | РАНГОЛИ | до 16.01.2027\n- **Фильтерр** | ГК «ЗемлякоФФ» | до 10.12.2029\n- **Атлант Супер** | АНПП «Агрохим-XXI» | до 15.02.2027\n- **Цимус Прогресс** | ЛИСТЕРРА | до 15.11.2031\n\n📈 **Стратегические альтернативы:**\nЕсли требуется смена механизма действия (например, при развитии резистентности к триазолам), рассмотрите препараты на основе SDHI-фунгицидов (например, содержащие бензовиндифлупир или седаксан) или стробилуринов.\n\nИнтерактивные предложения:\n- Показать подробную таблицу норм расхода для всех культур?\n- Найти все препараты, содержащие Пропиконазол?"}!@!
 ------------------------------------------------------------
 
-✅ FINAL ANSWER DELIVERED (Total time: 4.75s)
+✅ FINAL ANSWER DELIVERED (Total time: 4.58s)
 ===============================================================================================
