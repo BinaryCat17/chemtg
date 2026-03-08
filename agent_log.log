@@ -1,8 +1,8 @@
 
 ===============================================================================================
-🚀 NEW AGENT SESSION | User: давай другие химические группы
+🚀 NEW AGENT SESSION | User: расскажи за препарат виртуоз
 📊 MODEL: gemini-3.1-flash-lite
-📊 CONTEXT INFO: Messages=6, System Prompt=9441 chars
+📊 CONTEXT INFO: Messages=2, System Prompt=10173 chars
 --- SYSTEM PROMPT START ---
 You are a high-performance Autonomous AI Agent. Your primary goal is to provide factually accurate and verified information by orchestrating local database queries and global web searches.
 
@@ -28,7 +28,7 @@ You are a high-performance Autonomous AI Agent. Your primary goal is to provide 
 
 GENERAL STRATEGY:
 1. **Identify & Expand:** Query 'postgresql' for specific names and their composition.
-2. **Research (Internet):** Use 'web-search' to find international alternatives, MoA groups, and global context. DO NOT rely solely on your memory for "Global Insights".
+2. **Research (Internet):** Use 'web-search' for context (translate terms to English for better results). DO NOT rely solely on your memory for chemistry or global insights.
 3. **Verify (MANDATORY):** Cross-reference all findings with the local 'postgresql' database.
 
 TOOLS FORMAT:
@@ -38,6 +38,7 @@ TOOLS FORMAT:
 
 ### 🗄️ DATABASE RULES:
 - Use `ILIKE` for all case-insensitive searches.
+- **Data Integrity:** NEVER mention an Active Ingredient (AI) name without its concentration (e.g., "Propiconazole 250 g/l"). If the database result contains concentration data, you MUST include it in the final answer.
 - ALWAYS use full table names (schema.table) as provided in the SCHEMA section.
 - Use `status = 'Действует'`.
 
@@ -91,7 +92,7 @@ Table: reestr.pestitsidy_primeneniya
 
 USER CUSTOM INSTRUCTIONS:
 ### PERSONA & DOMAIN:
-You are a Proactive Expert Analyst of the "State Register of Pesticides and Agrochemicals" (Gosreestr). Your goal is to provide accurate, officially-verified, and actionable solutions. 
+You are a Proactive Expert Analyst of the "State Register of Pesticides and Agrochemicals" (Gosreestr). Your goal is to provide accurate, officially-verified, and actionable solutions for crop protection. 
 **Honesty & Transparency Rule:** If data is missing or a query is empty, state it clearly. Never "fill the gaps" with guesses. Transparency about limitations is highly respected.
 
 ### 🔬 CORE OPERATIONAL POLICY (STRICT):
@@ -116,6 +117,12 @@ You are a Proactive Expert Analyst of the "State Register of Pesticides and Agro
    - **Step 2: Похожие комбинации** (Целевые ДВ + доп. компоненты).
    - **Step 3: Стратегические альтернативы** (Другие ДВ, тот же MoA или цель).
 
+### 🔍 INTERNET SEARCH TRIGGERS (MANDATORY):
+You MUST use 'web-search' if the query involves:
+- **"Ротация" or "Антирезистентная стратегия"**: To find alternative FRAC/MoA groups and global recommendations.
+- **"Альтернативы" or "Замена"**: To look for new active ingredients not in the local DB.
+- **"Зарубежный опыт"**: To find international recommendations and brand names.
+
 ### 📊 STRUCTURED OUTPUT (NO TABLES, MINIMAL WATER):
 1. **📄 Профиль препарата [Название]:**
    - **Регистратор:** [Фирма] (без ООО/LLC)
@@ -125,17 +132,15 @@ You are a Proactive Expert Analyst of the "State Register of Pesticides and Agro
    - Для каждой культуры укажите: **Культура | Вредный объект | Норма расхода | Особенности применения**.
 3. **📦 Аналоги и альтернативы (ТОЛЬКО ДЛЯ СПЕЦИАЛЬНЫХ ЗАПРОСОВ ИЛИ ИНТЕРАКТИВА):**
    - Если результатов много, выведите 5-10 примеров и укажите общее количество: "Всего найдено X аналогов, ниже представлены 5 из них".
-   - **Формат:** [Название] | [Фирма] | [ДВ + Концентрация] | [Срок рег.]
+   - **Формат:** [Название] | [Фирма] | [ДВ + Концентрация - ОБЯЗАТЕЛЬНО] | [Срок рег.]
 
 ### 🤝 INTERACTIVITY & NEXT STEPS (MANDATORY):
 End with 1-2 brief "Интерактивных предложения":
-- "Показать подробную таблицу норм расхода для всех культур?"
 - "Найти аналоги этого препарата с такими же действующими веществами?"
 - "Найти препараты других химических групп для ротации?"
 
 ### 🔴 DATA QUALITY & SQL:
 - **Clean Names:** Remove legal prefixes and extra quotes.
-- **Data Completeness:** Every product profile MUST show specific concentrations.
 - **SQL Efficiency:** Use JOINs between `pestitsidy` and `pestitsidy_primeneniya` for full profiles.
 
 ### 🇷🇺 FINAL OUTPUT LANGUAGE:
@@ -151,7 +156,12 @@ When using 'answer-chat', ensure all newlines in the 'answer' string are properl
 ### 💡 EXAMPLE RESEARCH PATH (Analog Search):
 1. `postgresql`: Identify target AI.
 2. `postgresql`: Search for ALL products with target AI: `ILIKE ANY(ARRAY['%Analog1%', '%Analog2%'])`.
-3. `answer-chat`: Deliver the verified block-list + Total Count.
+3. `answer-chat`: Deliver the verified block-list.
+
+**Example for "Abakus Prime":** 
+- DB search "Абакус Прайм" -> Get AI (Pyraclostrobin + Epoxiconazole). 
+- DB search for ALL products with (Pyraclostrobin AND Epoxiconazole) -> Find "Кристалл", "Цериакс Плюс", etc.
+- Final Russian answer via answer-chat.
 
 OPERATIONAL RULES:
 - Internal reasoning: English.
@@ -161,90 +171,87 @@ OPERATIONAL RULES:
 ===============================================================================================
 
 [STEP 1] Requesting LiteLLM (gemini-3.1-flash-lite)...
-⏱️ Response received in 7.86s
-DEBUG: Full response object: ModelResponse(id='usmtaaXrFq-ZkdUPwM2BiQk', created=1772997042, model='gemini-3.1-flash-lite', object='chat.completion', system_fingerprint=None, choices=[Choices(finish_reason='stop', index=0, message=Message(content='Для ротации фунгицидов (предотвращения развития резистентности) необходимо чередовать препараты с разными механизмами действия. «Виртуоз» относится к классу триазолов (ингибиторы деметилирования, FRAC 3).\n\nДля эффективной ротации рекомендую использовать препараты из следующих групп:\n1.  **Стробилурины (FRAC 11)** — обладают защитным и лечебным действием, хорошо работают против широкого спектра пятнистостей.\n2.  **SDHI-ингибиторы (FRAC 7)** — современные препараты с высокой эффективностью против ржавчины и пятнистостей, часто используются в смесях.\n\nСейчас я выполню поиск препаратов, содержащих эти действующие вещества, чтобы предложить вам конкретные варианты для ротации.\n\n!@!{"tool": "postgresql", "query": "SELECT DISTINCT p.naimenovanie, p.deystvuyushchee_veshchestvo FROM reestr.pestitsidy p, jsonb_array_elements(p.deystvuyushchee_veshchestvo) as dv WHERE (dv->>\'veshchestvo\' ILIKE \'%азоксистробин%\' OR dv->>\'veshchestvo\' ILIKE \'%пираклостробин%\' OR dv->>\'veshchestvo\' ILIKE \'%флуксапироксад%\' OR dv->>\'veshchestvo\' ILIKE \'%бензовиндифлупир%\') AND p.status = \'Действует\' LIMIT 20;"}!@!', role='assistant', tool_calls=None, function_call=None, images=[], thinking_blocks=[], provider_specific_fields={'thought_signatures': ['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'], 'refusal': None, 'thinking_blocks': []}), provider_specific_fields={})], usage=Usage(completion_tokens=2108, prompt_tokens=3946, total_tokens=6054, completion_tokens_details=CompletionTokensDetailsWrapper(accepted_prediction_tokens=None, audio_tokens=None, reasoning_tokens=1758, rejected_prediction_tokens=None, text_tokens=350, image_tokens=None), prompt_tokens_details=PromptTokensDetailsWrapper(audio_tokens=None, cached_tokens=None, text_tokens=3946, image_tokens=None)), service_tier=None, vertex_ai_grounding_metadata=[], vertex_ai_url_context_metadata=[], vertex_ai_safety_results=[], vertex_ai_citation_metadata=[])
+⏱️ Response received in 2.88s
+DEBUG: Full response object: ModelResponse(id='0sytabDAHMS3xN8PyL2k8AU', created=1772997839, model='gemini-3.1-flash-lite', object='chat.completion', system_fingerprint=None, choices=[Choices(finish_reason='stop', index=0, message=Message(content='{\n  "reasoning": "I need to retrieve the full profile for the pesticide \'Виртуоз\', including its registration details, active ingredients, and application regulations. I will perform a SQL query joining \'reestr.pestitsidy\' and \'reestr.pestitsidy_primeneniya\' to get all necessary information.",\n  "tool_calls": [\n    {\n      "tool": "postgresql",\n      "query": "SELECT p.naimenovanie, p.registrant, p.deystvuyushchee_veshchestvo, p.status, p.srok_reg, pp.kultura, pp.vrednyy_obekt, pp.norma, pp.osobennosti FROM reestr.pestitsidy p LEFT JOIN reestr.pestitsidy_primeneniya pp ON p.nomer_reg = pp.nomer_reg WHERE p.naimenovanie ILIKE \'%Виртуоз%\';"\n    }\n  ]\n}', role='assistant', tool_calls=None, function_call=None, images=[], thinking_blocks=[], provider_specific_fields={'thought_signatures': ['EvUDCvIDAb4+9vvblv0thDZUu87+/qwRn1rEb4oXJaC+A75N6bH3ydnmK8k54oSKIRH/79JHLtJk1IrLG+88O6Ndu1KMlJQY+Zq8eY0uAESIIhh7jKDGk+iSuEw63qzB/3gU4bsbrp+oXkl2Iqmrhvjhl/JzmBE39LnXUCeYYemo92ONKLDGieYRPR+6Qk2bq6HtdUiRH+NrNUJge1UUF4TQzHh9PIScItgmdi6tTTbUCaKfhX7EmLsv/w+eZzhxMZxVKyyLSTTCMjVbZoPPIU+kKBS6Gse2MWsDewM0K6Kq8i0NOVKIq8JRn7zPhcibj9hBXzKtb5v6TNEi7CjN0yaNDso9BJvr6Aodqo9VaaJc0EXKSD7061TL/ZgMIYp1V/W4xH8Nwb5h14TDGsE/UxJbY+DNbBNyFnYLw4twWtHnM0YsNi9D5LZ7Wvkhq7xPrkAdf0xp0ksX/muDDLSa61w974tZqaXBvDg2Qo9cpToEwIwHlAZ6FVNh7tedo1AE26KzSxLbMicywC1JMjysXSviwC63xCa+3ovXkFnLR3Pv2N1crgk6rkE/D/+jeIu0S9lclMvfP5TUtBjcpvibD1J5hvclANRUGZ+zXH1Cuic9Rd8UqNb8s5libk0s8F8IntMcpeEx8mrBtpzrx1QXgVLkHs25gwUb'], 'refusal': None, 'thinking_blocks': []}), provider_specific_fields={})], usage=Usage(completion_tokens=328, prompt_tokens=2859, total_tokens=3187, completion_tokens_details=CompletionTokensDetailsWrapper(accepted_prediction_tokens=None, audio_tokens=None, reasoning_tokens=114, rejected_prediction_tokens=None, text_tokens=214, image_tokens=None), prompt_tokens_details=PromptTokensDetailsWrapper(audio_tokens=None, cached_tokens=None, text_tokens=2859, image_tokens=None)), service_tier=None, vertex_ai_grounding_metadata=[], vertex_ai_url_context_metadata=[], vertex_ai_safety_results=[], vertex_ai_citation_metadata=[])
 
 ------------------------------------------------------------
 [AGENT THOUGHTS / RESPONSE]
-Для ротации фунгицидов (предотвращения развития резистентности) необходимо чередовать препараты с разными механизмами действия. «Виртуоз» относится к классу триазолов (ингибиторы деметилирования, FRAC 3).
+{
+  "reasoning": "I need to retrieve the full profile for the pesticide 'Виртуоз', including its registration details, active ingredients, and application regulations. I will perform a SQL query joining 'reestr.pestitsidy' and 'reestr.pestitsidy_primeneniya' to get all necessary information.",
+  "tool_calls": [
+    {
+      "tool": "postgresql",
+      "query": "SELECT p.naimenovanie, p.registrant, p.deystvuyushchee_veshchestvo, p.status, p.srok_reg, pp.kultura, pp.vrednyy_obekt, pp.norma, pp.osobennosti FROM reestr.pestitsidy p LEFT JOIN reestr.pestitsidy_primeneniya pp ON p.nomer_reg = pp.nomer_reg WHERE p.naimenovanie ILIKE '%Виртуоз%';"
+    }
+  ]
+}
+------------------------------------------------------------
+⚠️ WARNING: No !@!{...}!@! format detected. Nudging model.
 
-Для эффективной ротации рекомендую использовать препараты из следующих групп:
-1.  **Стробилурины (FRAC 11)** — обладают защитным и лечебным действием, хорошо работают против широкого спектра пятнистостей.
-2.  **SDHI-ингибиторы (FRAC 7)** — современные препараты с высокой эффективностью против ржавчины и пятнистостей, часто используются в смесях.
+[STEP 2] Requesting LiteLLM (gemini-3.1-flash-lite)...
+⏱️ Response received in 1.31s
+DEBUG: Full response object: ModelResponse(id='08ytaaXTMYGY28oP9KaLwAw', created=1772997842, model='gemini-3.1-flash-lite', object='chat.completion', system_fingerprint=None, choices=[Choices(finish_reason='stop', index=0, message=Message(content='!@!{"tool": "postgresql", "query": "SELECT p.naimenovanie, p.registrant, p.deystvuyushchee_veshchestvo, p.status, p.srok_reg, pp.kultura, pp.vrednyy_obekt, pp.norma, pp.osobennosti FROM reestr.pestitsidy p LEFT JOIN reestr.pestitsidy_primeneniya pp ON p.nomer_reg = pp.nomer_reg WHERE p.naimenovanie ILIKE \'%Виртуоз%\';"}!@!', role='assistant', tool_calls=None, function_call=None, images=[], thinking_blocks=[], provider_specific_fields={'thought_signatures': ['EoYFCoMFAb4+9vtt50jGwz7m1A4eqGyQ4CJxOQY/AyL/RjNihTlgtD5almDjY1gcnEmDHcbpnlraS2gQrDAMxF+rwTDnmpw4SQGAn32cElBfrTDT5O12fgu3llURM1vq7Lu6wLLIPuLVhkAn1jtOPh3otaLR6OlKN6trwwEV9kPW7gOJNmxPBIz0FirCy69qWshANYygipQUox/Phxkxi5UUnYsYwSiYPldsFTIS5+N4Owj3F30nnV43VOKXttVyhZe3dxC9SgWucU/dvu73JB2laE42MHGvqecxv368BfRInjZkVBUGCMPdQ6XgDedj6hbmp9DNK6pRcZjtYu6n5o7qr/7TiSYMHob+jZbHfGQjrJcANj4YPJ32yYqZMl72aDFenDS7dzgZWPNXcvoG0a7mI28q/c3I1MNrIGoFv8ycw4JnqPynbTu41FJD0reN5eNF948Mfcax+ofc4e0cAd4Lr14S/DzxtUsdiXli9PhBhHee91+znBD2DVkcipaobZJeDEc1GHBmcVye6tu7RW4KuqOu5AmA0xEGi355Ibwsdt8giL1GDXfxARckd7Kf3Q5Sl3jsDQ5dIiVju/y1Icucihezt4TZ+fIlz6HCqL1+iwNeA7j+NldnCh3Ii7KOFgOnw7rRxolz1vfEuFWqzQRET3AkzUyEGPA7dZSzOrlW7OBHDeHcY6XruUWdJXWWKO5zRErheX37BgHIYbPU1eW45kC88Bn10RhP8F2JIZsEXpGZfSSGgRmewTr/kssZ3FBhh6UKk6vIrrHH/Yf0p3mrQlR7P81rBykkrUYsnbSJxo4xq8RK7Ti6L/i1oT2nyu6aTg6njtA4rvzPpUzuRbqTqqsUSfM8tQ=='], 'refusal': None, 'thinking_blocks': []}), provider_specific_fields={})], usage=Usage(completion_tokens=267, prompt_tokens=3124, total_tokens=3391, completion_tokens_details=CompletionTokensDetailsWrapper(accepted_prediction_tokens=None, audio_tokens=None, reasoning_tokens=139, rejected_prediction_tokens=None, text_tokens=128, image_tokens=None), prompt_tokens_details=PromptTokensDetailsWrapper(audio_tokens=None, cached_tokens=None, text_tokens=3124, image_tokens=None)), service_tier=None, vertex_ai_grounding_metadata=[], vertex_ai_url_context_metadata=[], vertex_ai_safety_results=[], vertex_ai_citation_metadata=[])
 
-Сейчас я выполню поиск препаратов, содержащих эти действующие вещества, чтобы предложить вам конкретные варианты для ротации.
-
-!@!{"tool": "postgresql", "query": "SELECT DISTINCT p.naimenovanie, p.deystvuyushchee_veshchestvo FROM reestr.pestitsidy p, jsonb_array_elements(p.deystvuyushchee_veshchestvo) as dv WHERE (dv->>'veshchestvo' ILIKE '%азоксистробин%' OR dv->>'veshchestvo' ILIKE '%пираклостробин%' OR dv->>'veshchestvo' ILIKE '%флуксапироксад%' OR dv->>'veshchestvo' ILIKE '%бензовиндифлупир%') AND p.status = 'Действует' LIMIT 20;"}!@!
+------------------------------------------------------------
+[AGENT THOUGHTS / RESPONSE]
+!@!{"tool": "postgresql", "query": "SELECT p.naimenovanie, p.registrant, p.deystvuyushchee_veshchestvo, p.status, p.srok_reg, pp.kultura, pp.vrednyy_obekt, pp.norma, pp.osobennosti FROM reestr.pestitsidy p LEFT JOIN reestr.pestitsidy_primeneniya pp ON p.nomer_reg = pp.nomer_reg WHERE p.naimenovanie ILIKE '%Виртуоз%';"}!@!
 ------------------------------------------------------------
 
 ------------------------------------------------------------
 [AGENT SQL QUERY]
-SELECT DISTINCT p.naimenovanie, p.deystvuyushchee_veshchestvo FROM reestr.pestitsidy p, jsonb_array_elements(p.deystvuyushchee_veshchestvo) as dv WHERE (dv->>'veshchestvo' ILIKE '%азоксистробин%' OR dv->>'veshchestvo' ILIKE '%пираклостробин%' OR dv->>'veshchestvo' ILIKE '%флуксапироксад%' OR dv->>'veshchestvo' ILIKE '%бензовиндифлупир%') AND p.status = 'Действует' LIMIT 20;
+SELECT p.naimenovanie, p.registrant, p.deystvuyushchee_veshchestvo, p.status, p.srok_reg, pp.kultura, pp.vrednyy_obekt, pp.norma, pp.osobennosti FROM reestr.pestitsidy p LEFT JOIN reestr.pestitsidy_primeneniya pp ON p.nomer_reg = pp.nomer_reg WHERE p.naimenovanie ILIKE '%Виртуоз%';
 ------------------------------------------------------------
 
 ------------------------------------------------------------
 [AGENT SQL RESULT]
 [
   {
-    "naimenovanie": "Сансэр Ультра",
+    "naimenovanie": "Виртуоз",
+    "registrant": "ООО «Ярило», 1083123001500",
     "deystvuyushchee_veshchestvo": [
       {
-        "veshchestvo": "Тебуконазол",
-        "koncentraciya": "317"
+        "veshchestvo": "Пропиконазол",
+        "koncentraciya": "250"
       },
       {
-        "veshchestvo": "Флутриафол",
-        "koncentraciya": "93"
-      },
-      {
-        "veshchestvo": "Азоксистробин",
-        "koncentraciya": "90"
-      }
-    ]
-  },
-  {
-    "naimenovanie": "Альтруист",
-    "deystvuyushchee_veshchestvo": [
-      {
-        "veshchestvo": "Азоксистробин",
-        "koncentraciya": "60"
-      },
-      {
-        "veshchestvo": "Тебуконазол",
-        "koncentraciya": "100"
-      }
-    ]
-  },
-  {
-    "naimenovanie": "Эйс",
-    "deystvuyushchee_veshchestvo": [
-      {
-        "veshchestvo": "Тебуконазол",
-        "koncentraciya": "160"
-      },
-      {
-        "veshchestvo": "Пираклостробин",
+        "veshchestvo": "Ципроконазол",
         "koncentraciya": "80"
-      },
-      {
-        "veshchestvo": "Протиоконазол",
-        "koncentraciya": "40"
       }
-    ]
+    ],
+    "status": "Действует",
+    "srok_reg": "16.09.2026",
+    "kultura": "Пшеница яровая и озимая",
+    "vrednyy_obekt": "Ржавчина бурая, ржавчина стеблевая, ржавчина желтая, мучнистая роса, септориоз листьев, пиренофороз",
+    "norma": "0,4-0,5",
+    "osobennosti": ""
   },
   {
-    "naimenovanie": "Приаксор",
-    "deystvuyushchee_...
+    "naimenovanie": "Виртуоз",
+    "registrant": "ООО «Ярило», 1083123001500",
+    "deystvuyushchee_veshchestvo": [
+      {
+        "veshchestvo": "Пропиконазол",
+        "koncentraciya": "250"
+      },
+      {
+        "veshchestvo": "Ципроконазол",
+        "koncentraciya": "80"
+      }
+    ],
+    "status": "Действует",
+    "srok_reg": "16.09.2026",
+    "kultura": "Ячмень яровой, озимый",
+    "vrednyy_obekt": "Гельмин...
 ------------------------------------------------------------
 
-[STEP 2] Requesting LiteLLM (gemini-3.1-flash-lite)...
-⏱️ Response received in 5.72s
-DEBUG: Full response object: ModelResponse(id='wMmtaf-MFsqOxN8PnJig2Aw', created=1772997050, model='gemini-3.1-flash-lite', object='chat.completion', system_fingerprint=None, choices=[Choices(finish_reason='stop', index=0, message=Message(content='!@!{"tool": "answer-chat", "answer": "Для ротации с препаратом «Виртуоз» (триазолы, FRAC 3) необходимо использовать фунгициды с другими механизмами действия, такими как стробилурины (FRAC 11) и SDHI-ингибиторы (FRAC 7). Это позволяет эффективно бороться с резистентностью патогенов.\\n\\nНиже представлены препараты из реестра, содержащие стробилурины и SDHI-ингибиторы. \\n\\n### 🛡️ Стратегические альтернативы для ротации:\\n\\n**1. Препараты на основе стробилуринов (FRAC 11):**\\n*   **Провизор** (Азоксистробин, 250 г/л) — чистый стробилурин.\\n*   **Пирафикс** (Пираклостробин, 250 г/л) — чистый стробилурин.\\n\\n**2. Препараты на основе SDHI-ингибиторов (FRAC 7):**\\n*   **Приаксор** (Пираклостробин + Флуксапироксад) — мощная комбинация SDHI и стробилурина.\\n\\n**3. Комбинированные препараты (Стробилурины + Триазолы):**\\n*Эти препараты также подходят для ротации, так как содержат стробилурины, но учитывайте, что в их составе есть другие триазолы (дифеноконазол, тебуконазол), что создает «триазольную нагрузку» на поле.*\\n*   **Амистар Топ** (Азоксистробин + Дифеноконазол)\\n*   **Аякс** (Азоксистробин + Дифеноконазол)\\n*   **Альтруист** (Азоксистробин + Тебуконазол)\\n*   **Коалиция** (Азоксистробин + Тебуконазол + Спироксамин)\\n*   **Эйс** (Пираклостробин + Тебуконазол + Протиоконазол)\\n\\n*Примечание: В списке представлены 8 из 20 найденных вариантов. Полный список включает также протравители (например, «Максим Кватро», «Кинто Плюс»), которые не подходят для обработки по вегетации.*\\n\\n### ⚠️ Важное замечание по ротации:\\nПри выборе препарата для ротации старайтесь чередовать не только действующие вещества, но и **химические классы**. Если вы использовали «Виртуоз» (триазолы), следующей обработкой лучше выбрать препарат из группы стробилуринов или SDHI (например, «Приаксор» или «Провизор»), чтобы «разорвать» цикл развития грибков.\\n\\n🤝 **Интерактивные предложения:**\\n- Показать подробную таблицу норм расхода для одного из этих препаратов?\\n- Подобрать фунгицид для конкретной культуры (например, только для пшеницы)?"}!@!', role='assistant', tool_calls=None, function_call=None, images=[], thinking_blocks=[], provider_specific_fields={'thought_signatures': ['EvkJCvYJAb4+9vtcLxb2aJsuFoKR7WBjDKdl+nDxqT7Vkb9qmUyFSPb45BZl28NcBzKQWXAXjJK1Xs9x0zpeESjXbPFFj3V48VuAWIHElOCy0n53wiza8sqW/qD7/vCGPYfw0ORJnLJcD7mae11wdPSswTt2kWJdtiM8HwQJResGA3+IHPJAEw8stB06eNftA+6Rb/9g0eCmfQHNcB2oOZOHShBJeDmyPBNIynr0SP4b2cBwyacMO3Hc6IadXJjlijAeRG/kd8B8lpdSyimp0z48sgyxB8Dd4VMf4bbkKlhnq5WRSEL12NTt3169mEH6qS3PDJRf6hqFm8ih8j5iJ+Y1c85W27takNTWmfwI3mtBpz5SeIEOef1ts25Y4MUeKx/uahlAtx2294ptM1gE7SepT8K6/zt9KTQ+51AAItcTDXBHF2X+rFppoK6h+x/+FlaeoBsn/gMaE3iNelFsh+KuRIQogsny8cSyTcH2hDD/A1KQrb3u8wbQopvtPkYTpNejDXmYhXi0UeKA5FJ3XqCZ1/EIw7RwoCtNrBLhjSeXW2kkQlWNPBBoUgbO6tNsuu4ZajULYP9cxESqCtSBQkoqPK0vfn9yR8hG0QQJfb8snPEi/TE5rugeEKqq4uZwu0/5oVVoi2P3BQEgYCf4sQnLO1yd0mChbxRKV35KIWrBAimTvyqozKdJgYW/qCscjFvxH22v+EWwCjCsByFIjqS2RHynHO9BWgrFVOipWc3yF49zf6jGEOMYdHt/Dy8GT9z7a5VwMmNU/xmKQkrGu2CL1O1dkAhAB7VzIsDk6/lhl23I75CotrAaJJPGimOBla3aueXIS8EuW7biZZ2JWMMuui2idrNMh4QMqIU9aAGU4R/9j212vpA4nPwOVCUE7JT7gQ6/svYNhKwPcg9Vyjk8Li08gDrjSdPF2ehttjeQRN+FqAzGto3ptDHmD0r8KIM1+Jnv2j47p36GDBT1ovCHUejTyRx+cWZxSa5uknRw/lOBFwcfBZPyTNiaAswoGokmWTYU7T1Qzyl8UNbvUU5DBlVfeJVUAtr6sTnB8ae9hz76g63zxEOwnnX9MOk+RWeNsbXaVpTn/vpcMoNwMo6QjjaelSNKbjdFIoE2Mp5TB3TTicnyebr4TkpK4Hiu/ACZNfK8K2YcteWXmkEBzkKS8JD57GzJdkVupT9h572enM0BN8C2Bv8VWfulYHYm14wWrgm1/AfAPkCzeNwwhjaiI8XkDCTsKnNUgG8h2OV6ARJmU2Yqfgn6pvSQcjc2x5hQlb43lqcx2INBNo8NoYD1ZUN3685yfUDQJ4AQbJzj3tq9FqkLFgjIRmUf14JS34b3wvfNjebnPFm5f8fEnGi97W9lH3haBmOi4goTTqDqxPwrnMOUaGdjY4YA2XH7nTSOZ1yLudokzf67BL9TPkjOXdfwYadxpmvtjtXRL4St1V0LLQqMLsWD087QIqcs5qjgoeRp/eliTpYQqT3RZCIcpipKRIdg9r9G5mliYP9ywTVe00WSTsCB+7Zxa1hSAPuofVCDAeeoJ/GSw6qAJKzLbveE7sFVEZEso4dU32MN/wYJkYAZBWyR5EH/0bk0eTM8FNJvRkdfSAtbhF0zncM4vDmb+J6cJFQNhPAyoj8Y5ptuASq/zwqp1l1Mse3DqIPuDZhobT3wKXvYiY2IL9JcUbUsankVe03uuw=='], 'refusal': None, 'thinking_blocks': []}), provider_specific_fields={})], usage=Usage(completion_tokens=1000, prompt_tokens=6739, total_tokens=7739, completion_tokens_details=CompletionTokensDetailsWrapper(accepted_prediction_tokens=None, audio_tokens=None, reasoning_tokens=292, rejected_prediction_tokens=None, text_tokens=708, image_tokens=None), prompt_tokens_details=PromptTokensDetailsWrapper(audio_tokens=None, cached_tokens=None, text_tokens=6739, image_tokens=None)), service_tier=None, vertex_ai_grounding_metadata=[], vertex_ai_url_context_metadata=[], vertex_ai_safety_results=[], vertex_ai_citation_metadata=[])
+[STEP 3] Requesting LiteLLM (gemini-3.1-flash-lite)...
+⏱️ Response received in 4.50s
+DEBUG: Full response object: ModelResponse(id='2MytacDxEbulvdIP2-bC6AE', created=1772997843, model='gemini-3.1-flash-lite', object='chat.completion', system_fingerprint=None, choices=[Choices(finish_reason='stop', index=0, message=Message(content='!@!{"tool": "answer-chat", "answer": "📄 **Профиль препарата Виртуоз**:\\n- **Регистратор:** Ярило\\n- **Состав:** Пропиконазол (250 г/л) + Ципроконазол (80 г/л)\\n- **Статус:** Действует до 16.09.2026\\n\\n🚜 **Регламент применения (ПОДРОБНО):**\\n\\n*   **Пшеница яровая и озимая**\\n    *   Вредные объекты: Ржавчина бурая, ржавчина стеблевая, ржавчина желтая, мучнистая роса, септориоз листьев, пиренофороз\\n    *   Норма расхода: 0,4-0,5 л/га\\n\\n*   **Ячмень яровой и озимый**\\n    *   Вредные объекты: Гельминтоспориозные пятнистости (темно-бурая, сетчатая, полосатая), мучнистая роса, ржавчина карликовая, ржавчина бурая, ржавчина стеблевая, ринхоспориоз\\n    *   Норма расхода: 0,4-0,5 л/га\\n\\n*   **Рожь озимая**\\n    *   Вредные объекты: Мучнистая роса, ржавчина бурая, ржавчина стеблевая, септориоз\\n    *   Норма расхода: 0,4-0,5 л/га\\n\\n*   **Овес**\\n    *   Вредные объекты: Красно-бурая пятнистость\\n    *   Норма расхода: 0,4-0,5 л/га\\n\\n*   **Свекла сахарная**\\n    *   Вредные объекты: Церкоспороз, мучнистая роса\\n    *   Норма расхода: 0,5-0,7 л/га\\n\\n🤝 **Интерактивные предложения:**\\n- Найти аналоги этого препарата с такими же действующими веществами?\\n- Найти препараты других химических групп для ротации?"}!@!', role='assistant', tool_calls=None, function_call=None, images=[], thinking_blocks=[], provider_specific_fields={'thought_signatures': ['EtkJCtYJAb4+9vvtk6Z5btxBiAa54VHeQ66pRsNomS3elOhVKXPEL2HNGMkqwpF0UWyvzNoTeTSWofZ5BD5YN0pt3KnBoL3wK5Z/w+29I/mNZ0Eh7nRAtsNhB3Drz6AH24N9HyV5eOd+Jlnp3YD4x33kuBVj3lxJ7ji154G3UMtjwrobVqCRpWSO78mKYGRm9s+jssIm9bFF4BQE0RAfgAYkJoJIsM2BLRk0JxJTJihMp1osviV0XTKqzHY7mR8Bpx+HpGlCbUGOYjMOeQmYHHvPMvXV+h60kAhLWp9vzqFD1AC/RIC+p90HQ1CimRh6lwHmGqlnFvdreQ2g/VCF3Gf6TE555E7xOV9ZYIdSw4ea1846DdSsNdwuCGR40AsOT4eaWHvu8r/MZoKoGijGcckZA29D43YKecJ+P6SAXQ8NuqUX2ocRlTsI884ypJsUASrSWUL/z30/ixPeFMpgagTd72IWEvVIVkQsIk7bvmxDQ5TciU0z6Yycd85HtOX8D21mFe0T+OZDh8p9hawFVx0EWoqZzNQht07LAoSyHG3TJDUlzhhqlkScNiRV5KTXRMpRuEqZ4hpxvJ07xsn25mg4JMRTfFOWBHNmomM69FPcZFxVkl3wJbUlDp5CeW4IPQh4KgL6/m4KWDTzVBd9/r/Sju0ptyXy0Aaw8I7LtS+1NRcvZABI4h9Pyw8z75VsfnI8a+6hu/zib7Y9KLNJl6JHHs+cJBm7AdJg8HfPC03WTcSL+UKpyks0aGfFETXVySfRrs4tVYR9HsSUCTtnIMim5JmUmgABHCVi0vNBrAkf2MRqP/IizD7CRucc4vwbwUZZOcneeiYkpNfEc8VqXmO6jmLfmHLl4STWx3ydvKqgkAiiP9az9f7vdtezwa8jwj0ARqlktm7dEPsAuIFbcfCQHn35Dz8EiEzyRSJ15Wbrib+Zqod6Dbisxk0h3U+eInOrHddJ+0Up4/FZAn1zM+asCM/fdV2d4StzIkzY+JX2osTSDuIQ1VMZgAXJcr3QDUSIOplkHeuKZS5oLnZXi+QfrhnRn0LpW9w0xepkqbPK86L0Kh5+UwdUAOfpYFNTpijfAOijX/LXVaLMS5xBn9XYP4YVg9q2WWqk6teGbm3q0eOMj8xcledkewjSKA2WBlz0t+QZQ6ikIcWVz5xCobKtx5R6pOil0kGgxZi5Wm6be8PZoWmHBK2ikYXUBaGT7fL7E8IRqGdIIUMTHrY3N8CcUTypt+vfNBTdjauwX6CDqUQ9bAIbUe3q1lkiUZEU5yQKru/EHa3Yw1OVJbbdqcdnUede/pj4mX87z9TMkM0xsP9MkbAnxTFkTUr9ywmAQqtXVN0j3HMTbxiz9F+Qt9QJkmqTCnEo1dPzoVVusn3qx30jBpCqldnL3aqks7HZi4hlH70iltndG72SB3kKUZQPc209mGdhRTv0SM1kot/vpCcqb7khBYbG+lVC+lC5LhrDgjTMXAmal+7xYYHJQg9tSiytmb4J47bO023kEct21Zn0zQCRAthbJ9lQqOnwbNM6CMq5dbyErhYeI/ZH3wtCH7VjcN5mDDn2CMiJbW9EcK5JJzzeG71WMi7rRL3zeGaSQdzk6lI1mXgnOYuierElZ90WDf9ssxEF0aKY5uNHR4bdPjOW5XafahQ='], 'refusal': None, 'thinking_blocks': []}), provider_specific_fields={})], usage=Usage(completion_tokens=829, prompt_tokens=4486, total_tokens=5315, completion_tokens_details=CompletionTokensDetailsWrapper(accepted_prediction_tokens=None, audio_tokens=None, reasoning_tokens=307, rejected_prediction_tokens=None, text_tokens=522, image_tokens=None), prompt_tokens_details=PromptTokensDetailsWrapper(audio_tokens=None, cached_tokens=None, text_tokens=4486, image_tokens=None)), service_tier=None, vertex_ai_grounding_metadata=[], vertex_ai_url_context_metadata=[], vertex_ai_safety_results=[], vertex_ai_citation_metadata=[])
 
 ------------------------------------------------------------
 [AGENT THOUGHTS / RESPONSE]
-!@!{"tool": "answer-chat", "answer": "Для ротации с препаратом «Виртуоз» (триазолы, FRAC 3) необходимо использовать фунгициды с другими механизмами действия, такими как стробилурины (FRAC 11) и SDHI-ингибиторы (FRAC 7). Это позволяет эффективно бороться с резистентностью патогенов.\n\nНиже представлены препараты из реестра, содержащие стробилурины и SDHI-ингибиторы. \n\n### 🛡️ Стратегические альтернативы для ротации:\n\n**1. Препараты на основе стробилуринов (FRAC 11):**\n*   **Провизор** (Азоксистробин, 250 г/л) — чистый стробилурин.\n*   **Пирафикс** (Пираклостробин, 250 г/л) — чистый стробилурин.\n\n**2. Препараты на основе SDHI-ингибиторов (FRAC 7):**\n*   **Приаксор** (Пираклостробин + Флуксапироксад) — мощная комбинация SDHI и стробилурина.\n\n**3. Комбинированные препараты (Стробилурины + Триазолы):**\n*Эти препараты также подходят для ротации, так как содержат стробилурины, но учитывайте, что в их составе есть другие триазолы (дифеноконазол, тебуконазол), что создает «триазольную нагрузку» на поле.*\n*   **Амистар Топ** (Азоксистробин + Дифеноконазол)\n*   **Аякс** (Азоксистробин + Дифеноконазол)\n*   **Альтруист** (Азоксистробин + Тебуконазол)\n*   **Коалиция** (Азоксистробин + Тебуконазол + Спироксамин)\n*   **Эйс** (Пираклостробин + Тебуконазол + Протиоконазол)\n\n*Примечание: В списке представлены 8 из 20 найденных вариантов. Полный список включает также протравители (например, «Максим Кватро», «Кинто Плюс»), которые не подходят для обработки по вегетации.*\n\n### ⚠️ Важное замечание по ротации:\nПри выборе препарата для ротации старайтесь чередовать не только действующие вещества, но и **химические классы**. Если вы использовали «Виртуоз» (триазолы), следующей обработкой лучше выбрать препарат из группы стробилуринов или SDHI (например, «Приаксор» или «Провизор»), чтобы «разорвать» цикл развития грибков.\n\n🤝 **Интерактивные предложения:**\n- Показать подробную таблицу норм расхода для одного из этих препаратов?\n- Подобрать фунгицид для конкретной культуры (например, только для пшеницы)?"}!@!
+!@!{"tool": "answer-chat", "answer": "📄 **Профиль препарата Виртуоз**:\n- **Регистратор:** Ярило\n- **Состав:** Пропиконазол (250 г/л) + Ципроконазол (80 г/л)\n- **Статус:** Действует до 16.09.2026\n\n🚜 **Регламент применения (ПОДРОБНО):**\n\n*   **Пшеница яровая и озимая**\n    *   Вредные объекты: Ржавчина бурая, ржавчина стеблевая, ржавчина желтая, мучнистая роса, септориоз листьев, пиренофороз\n    *   Норма расхода: 0,4-0,5 л/га\n\n*   **Ячмень яровой и озимый**\n    *   Вредные объекты: Гельминтоспориозные пятнистости (темно-бурая, сетчатая, полосатая), мучнистая роса, ржавчина карликовая, ржавчина бурая, ржавчина стеблевая, ринхоспориоз\n    *   Норма расхода: 0,4-0,5 л/га\n\n*   **Рожь озимая**\n    *   Вредные объекты: Мучнистая роса, ржавчина бурая, ржавчина стеблевая, септориоз\n    *   Норма расхода: 0,4-0,5 л/га\n\n*   **Овес**\n    *   Вредные объекты: Красно-бурая пятнистость\n    *   Норма расхода: 0,4-0,5 л/га\n\n*   **Свекла сахарная**\n    *   Вредные объекты: Церкоспороз, мучнистая роса\n    *   Норма расхода: 0,5-0,7 л/га\n\n🤝 **Интерактивные предложения:**\n- Найти аналоги этого препарата с такими же действующими веществами?\n- Найти препараты других химических групп для ротации?"}!@!
 ------------------------------------------------------------
 
-✅ FINAL ANSWER DELIVERED (Total time: 5.72s)
+✅ FINAL ANSWER DELIVERED (Total time: 4.50s)
 ===============================================================================================
