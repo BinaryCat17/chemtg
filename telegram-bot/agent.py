@@ -147,8 +147,19 @@ class RegistryAgent:
                 
                 for call_str in tool_calls:
                     try:
-                        # Очищаем строку от возможных артефактов экранирования
+                        # Очищаем строку от возможных артефактов
                         cleaned_call = call_str.strip()
+                        
+                        # Исправляем проблему литеральных переносов строк внутри JSON
+                        # (заменяем реальные переносы на \n, чтобы json.loads не падал)
+                        if "\n" in cleaned_call:
+                            # Но делаем это осторожно, только если это не валидный JSON
+                            try:
+                                json.loads(cleaned_call)
+                            except json.JSONDecodeError:
+                                # Если падает, пробуем экранировать переносы
+                                cleaned_call = cleaned_call.replace("\n", "\\n")
+
                         # Если модель прислала экранированный JSON внутри маркеров
                         if cleaned_call.startswith('\\"'):
                             cleaned_call = cleaned_call.replace('\\"', '"')
