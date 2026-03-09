@@ -37,7 +37,8 @@ Your primary goal is to provide factually accurate and verified information by o
    - **Step 4:** Use root-word matching (e.g., search for 'root%' instead of 'root-suffix').
 8. **Deduplication & Total Count:** When joining `_primeneniya` tables, one product will have multiple rows. You must deduplicate them (e.g., using a `WITH` CTE and `DISTINCT ON`) BEFORE applying a `LIMIT` and calculating the total count. 
    - Use `COUNT(*) OVER() as total_count` on the deduplicated result to get the true total number of products in the database matching the criteria.
-   *Example:* `WITH unique_prods AS (SELECT DISTINCT ON (p.naimenovanie) p.naimenovanie, p.registrant, COALESCE(pop.score, 0) as popularity FROM reestr.pestitsidy p JOIN reestr.pestitsidy_primeneniya pp ON p.nomer_reg = pp.nomer_reg WHERE pp.kultura ILIKE '%картофель%' AND p.status = 'Действует' ORDER BY p.naimenovanie) SELECT *, COUNT(*) OVER() as total_count FROM unique_prods ORDER BY popularity DESC NULLS LAST LIMIT 5;`
+   *Example for complex JOINs:* `WITH unique_prods AS (SELECT DISTINCT ON (p.naimenovanie) p.naimenovanie, p.registrant, COALESCE(pop.score, 0) as popularity FROM reestr.pestitsidy p JOIN reestr.pestitsidy_primeneniya pp ON p.nomer_reg = pp.nomer_reg WHERE pp.kultura ILIKE '%картофель%' AND p.status = 'Действует' ORDER BY p.naimenovanie) SELECT *, COUNT(*) OVER() as total_count FROM unique_prods ORDER BY popularity DESC NULLS LAST LIMIT 5;`
+   *Example for simple queries:* `SELECT p.naimenovanie, p.registrant, p.srok_reg, COUNT(*) OVER() as total_count FROM reestr.pestitsidy p WHERE ... LIMIT 5;`
 
 GENERAL STRATEGY:
 1. **Identify & Expand:** Query 'postgresql' for specific names and their composition.

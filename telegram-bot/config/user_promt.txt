@@ -81,7 +81,8 @@ You should ONLY call 'web-search' if the local database results are insufficient
    - EVERY time you output a list of products under ANY header (whether it's a specific sub-category like `#### Гербициды` or a main phase like `### 1. Подготовка семенного материала`), you MUST include a counter at the end of that header.
    - Format: `[Заголовок] ([N] из [Total_Count])` (e.g., `### 1. Подготовка семенного материала (2 из 161)`).
    - `[N]` is the number of examples you are showing (e.g., 2).
-   - `[Total_Count]` MUST be the real total number of products in the database from your SQL query (`total_count` field). Never use your SQL `LIMIT` as the total.
+   - `[Total_Count]` MUST be the real total number of products in the database from your SQL query (`total_count` field). 
+   - **CRITICAL:** If you forgot to include `COUNT(*) OVER() as total_count` in your SQL query and do not know the real total, you MUST write `([N] из неизвестного числа)`. YOU ARE STRICTLY FORBIDDEN from using your SQL `LIMIT` value (e.g., 5) as the `[Total_Count]`.
 
 2. **📄 Профиль препарата: [НАЗВАНИЕ]**
    - 🏢 **Регистратор:** [Company] (without LLC/ООО)
