@@ -89,7 +89,6 @@ class RegistryAgent:
         header += f"📊 SESSION ID: {self.session_id}\n"
         header += f"📊 MODEL: {self.model}\n"
         header += f"📊 CONTEXT INFO: Messages={len(history)+2}, System Prompt={len(self.system_prompt)} chars\n"
-        header += f"--- SYSTEM PROMPT START ---\n{self.system_prompt}\n--- SYSTEM PROMPT END ---\n"
         header += f"{'='*95}"
         self._to_log(header, mode='a')
 
@@ -117,7 +116,8 @@ class RegistryAgent:
                 
                 duration = time.time() - start_time
                 self._to_log(f"⏱️ Response received in {duration:.2f}s")
-                self._to_log(f"DEBUG: Full response object: {response}")
+                # Убрано логирование полного объекта response, чтобы не засорять логи длинными кэшами и ID
+                # self._to_log(f"DEBUG: Full response object: {response}")
                 
                 response_text = response.choices[0].message.content or ""
                 
