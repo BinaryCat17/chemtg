@@ -58,9 +58,9 @@ async def cmd_help(message: types.Message):
         "/new — начать новый диалог (очистить историю)\n"
         "/help — показать это сообщение\n\n"
         "<b>Администрирование:</b>\n"
-        "/listusers — список разрешенных пользователей\n"
-        "/adduser @username — добавить пользователя\n"
-        "/removeuser @username — удалить пользователя\n"
+        "/listusers — список разрешенных ID\n"
+        "/adduser ID — добавить ID пользователя\n"
+        "/removeuser ID — удалить ID пользователя\n"
         "/reload_prompt — перезагрузить файлы промптов\n"
         "/debug — техническая информация"
     )
@@ -82,76 +82,77 @@ async def cmd_debug(message: types.Message):
         await message.answer("⛔ Доступ запрещён.")
         return
     status = "✅ Подключено"
-    await message.answer(f"🔍 <b>Debug Info:</b>\nСтатус: {status}\nUser ID: <code>{message.from_user.id}</code>\nAdmin: <code>{await is_admin(message.from_user.username)}</code>", parse_mode="HTML")
+    await message.answer(f"🔍 <b>Debug Info:</b>\nСтатус: {status}\nUser ID: <code>{message.from_user.id}</code>\nAdmin: <code>{await is_admin(message.from_user.id)}</code>", parse_mode="HTML")
 
 
 @dp.message(Command("adduser"))
 async def cmd_adduser(message: types.Message):
-    if not await is_admin(message.from_user.username):
+    if not await is_admin(message.from_user.id):
         await message.answer("⛔ У вас нет прав администратора.")
         return
     
     parts = message.text.split()
     if len(parts) < 2:
-        await message.answer("⚠️ Использование: <code>/adduser @username</code>", parse_mode="HTML")
+        await message.answer("⚠️ Использование: <code>/adduser USER_ID</code>", parse_mode="HTML")
         return
 
-    username = parts[1].strip().lower().replace("@", "")
-    if not username:
-        await message.answer("⚠️ Некорректный username.")
+    user_id = parts[1].strip()
+    if not user_id.isdigit():
+        await message.answer("⚠️ USER_ID должен быть числом.")
         return
 
-    whitelist_set.add(username)
+    whitelist_set.add(user_id)
     try:
         WHITELIST_FILE.write_text(
             json.dumps(list(whitelist_set), indent=2, ensure_ascii=False),
             encoding="utf-8"
         )
-        await message.answer(f"✅ Пользователь <b>@{username}</b> добавлен в белый список.", parse_mode="HTML")
+        await message.answer(f"✅ ID <code>{user_id}</code> добавлен в белый список.", parse_mode="HTML")
     except Exception as e:
         await message.answer(f"❌ Ошибка при сохранении: {e}")
 
 
 @dp.message(Command("removeuser"))
 async def cmd_removeuser(message: types.Message):
-    if not await is_admin(message.from_user.username):
+    if not await is_admin(message.from_user.id):
         await message.answer("⛔ У вас нет прав администратора.")
         return
     
     parts = message.text.split()
     if len(parts) < 2:
-        await message.answer("⚠️ Использование: <code>/removeuser @username</code>", parse_mode="HTML")
+        await message.answer("⚠️ Использование: <code>/removeuser USER_ID</code>", parse_mode="HTML")
         return
 
-    username = parts[1].strip().lower().replace("@", "")
-    if username in whitelist_set:
-        whitelist_set.discard(username)
+    user_id = parts[1].strip()
+    if user_id in whitelist_set:
+        whitelist_set.discard(user_id)
         try:
             WHITELIST_FILE.write_text(
                 json.dumps(list(whitelist_set), indent=2, ensure_ascii=False),
                 encoding="utf-8"
             )
-            await message.answer(f"✅ Пользователь <b>@{username}</b> удален из белого списка.", parse_mode="HTML")
+            await message.answer(f"✅ ID <code>{user_id}</code> удален из белого списка.", parse_mode="HTML")
         except Exception as e:
             await message.answer(f"❌ Ошибка при сохранении: {e}")
     else:
-        await message.answer(f"❓ Пользователь @{username} не найден в списке.")
+        await message.answer(f"❓ ID {user_id} не найден в списке.")
 
 
 @dp.message(Command("listusers"))
 async def cmd_listusers(message: types.Message):
-    if not await is_admin(message.from_user.username):
+    if not await is_admin(message.from_user.id):
         await message.answer("⛔ У вас нет прав администратора.")
         return
     
-    load_whitelist() # Перезагрузим на случай ручных правок файла
-    users = "\n".join([f"• @{u}" for u in sorted(whitelist_set)]) or "<i>Список пуст</i>"
-    await message.answer(f"📋 <b>Белый список ({len(whitelist_set)}):</b>\n{users}", parse_mode="HTML")
+    load_whitelist()
+    users = "\n".join([f"• <code>{u}</code>" for u in sorted(whitelist_set)]) or "<i>Список пуст</i>"
+    await message.answer(f"📋 <b>Белый список (ID):</b>\n{users}", parse_mode="HTML")
 
 
 @dp.message(Command("reload_prompt"))
 async def cmd_reload_prompt(message: types.Message):
-    if not await is_admin(message.from_user.username):
+    if not await is_admin(message.from_user.id):
+        await message.answer("⛔ У вас нет прав администратора.")
         return
     load_prompts()
     await message.answer("✅ Промпты перезагружены из файлов!")
@@ -179,9 +180,7 @@ async def handle_message(message: types.Message):
 
     # 2. Делаем запрос через агента
     try:
-        # Используем username если есть, иначе user_id
-        session_id = message.from_user.username or str(user_id)
-        session_id = session_id.replace("@", "")
+        session_id = str(user_id)
         
         # Инициализируем агента с ID сессии
         agent = RegistryAgent(session_id=session_id)

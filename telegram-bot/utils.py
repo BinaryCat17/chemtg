@@ -1,5 +1,5 @@
 import config
-from config import ADMIN_USERNAME, whitelist_set, load_whitelist, log_prompt
+from config import whitelist_set, load_whitelist, log_prompt
 from aiogram.types import User
 import re
 import html
@@ -44,14 +44,14 @@ def format_for_telegram(text: str) -> str:
 
     return text.strip()
 
-async def is_admin(username: str) -> bool:
-    if not username: return False
-    return username.lower().replace("@", "") == ADMIN_USERNAME
+async def is_admin(user_id: int) -> bool:
+    if not user_id: return False
+    return user_id == config.ADMIN_ID
 
 
 async def is_whitelisted(user: User) -> bool:
     load_whitelist()
-    if not user or not user.username:
+    if not user:
         return False
-    username_clean = user.username.lower().replace("@", "")
-    return await is_admin(user.username) or username_clean in whitelist_set
+    # Админ всегда в белом списке, либо проверяем по набору ID
+    return await is_admin(user.id) or str(user.id) in whitelist_set

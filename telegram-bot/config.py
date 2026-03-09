@@ -11,14 +11,21 @@ load_dotenv()
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
 LLM_MODEL = os.getenv("LLM_MODEL")
-ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "").lower().replace("@", "")
+
+# Читаем ADMIN_ID как число
+admin_id_raw = os.getenv("ADMIN_ID", "0")
+try:
+    ADMIN_ID = int(admin_id_raw)
+except ValueError:
+    ADMIN_ID = 0
+    print(f"[ERROR] Некорректный ADMIN_ID в .env: {admin_id_raw}", flush=True)
 
 CONFIG_DIR = Path("/app/config")
 WHITELIST_FILE = CONFIG_DIR / "whitelist.json"
 USER_PROMPT_FILE = CONFIG_DIR / "user_promt.txt"
 SYSTEM_PROMPT_FILE = CONFIG_DIR / "system_promt.txt"
 
-whitelist_set = set()
+whitelist_set = set() # Здесь будем хранить ID как строки
 last_mtime = 0.0
 current_user_prompt = ""
 current_system_prompt = ""
@@ -45,7 +52,8 @@ def load_whitelist():
     try:
         data = json.loads(WHITELIST_FILE.read_text(encoding="utf-8-sig"))
         whitelist_set.clear()
-        whitelist_set.update({str(item).lower().replace("@", "") for item in data})
+        # Храним ID как строки для консистентности с JSON
+        whitelist_set.update({str(item) for item in data})
         last_mtime = mtime
         print(f"[INFO] Whitelist загружен: {len(whitelist_set)} пользователей", flush=True)
     except Exception as e:
