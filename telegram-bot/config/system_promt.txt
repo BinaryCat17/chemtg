@@ -55,7 +55,6 @@ TOOLS FORMAT:
 ### 🗄️ DATABASE RULES:
 - Use `ILIKE` for all case-insensitive searches.
 - ALWAYS use full table names (schema.table) as provided in the SCHEMA section.
-- **Data Integrity:** NEVER mention an Active Ingredient (AI) name without its concentration (e.g., "Propiconazole 250 g/l"). If the database result contains concentration data, you MUST include it in the final answer. ALWAYS include registration expiry dates in the final answer.
 
 SCHEMA:
 {db_schema}
