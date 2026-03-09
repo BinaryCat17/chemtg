@@ -2,6 +2,7 @@ import json
 import config
 import traceback
 import sys
+import asyncio
 from datetime import datetime
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
@@ -41,6 +42,8 @@ async def set_commands():
         BotCommand(command="reload_prompt", description="Обновить промпты (Admin)"),
         BotCommand(command="debug", description="Проверить подключение"),
         BotCommand(command="update_info", description="Статус реестра (Admin)"),
+        BotCommand(command="index_popularity", description="Индексировать популярность (Admin)"),
+        BotCommand(command="top_popularity", description="Топ-30 индекса (Admin)"),
         BotCommand(command="help", description="Список команд"),
     ]
     # Устанавливаем команды для всех пользователей по умолчанию
@@ -48,22 +51,6 @@ async def set_commands():
 
 
 # ====================== КОМАНДЫ ======================
-@dp.message(Command("update_info"))
-async def cmd_update_info(message: types.Message):
-    if not await is_admin(message.from_user.id):
-        await message.answer("⛔ У вас нет прав администратора.")
-        return
-    
-    from database import Database
-    db = Database()
-    try:
-        query = "SELECT MAX(imported_at) as last_update, COUNT(*) as total FROM reestr.pestitsidy;"
-        res = db.execute_query(query)
-        last_date = res[0]['last_update'].strftime("%d.%m.%Y %H:%M")
-        total = res[0]['total']
-        await message.answer(f"📊 <b>Статус реестра:</b>\nВсего препаратов: <code>{total}</code>\nПоследнее обновление: <code>{last_date}</code>\n\n🕒 Следующее автоматическое обновление: <b>сегодня в 00:00</b>", parse_mode="HTML")
-    except Exception as e:
-        await message.answer(f"❌ Ошибка: {e}")
 @dp.message(Command("start", "help"))
 async def cmd_help(message: types.Message):
     # Принудительно обновляем команды при старте
@@ -79,6 +66,9 @@ async def cmd_help(message: types.Message):
         "/adduser ID — добавить ID пользователя\n"
         "/removeuser ID — удалить ID пользователя\n"
         "/reload_prompt — перезагрузить файлы промптов\n"
+        "/update_info — статус базы данных\n"
+        "/index_popularity — запустить индексацию популярности\n"
+        "/top_popularity — посмотреть Топ-30 индекса\n"
         "/debug — техническая информация"
     )
     await message.answer(text, parse_mode="HTML")
@@ -173,6 +163,60 @@ async def cmd_reload_prompt(message: types.Message):
         return
     load_prompts()
     await message.answer("✅ Промпты перезагружены из файлов!")
+
+
+@dp.message(Command("update_info"))
+async def cmd_update_info(message: types.Message):
+    if not await is_admin(message.from_user.id):
+        await message.answer("⛔ У вас нет прав администратора.")
+        return
+    
+    from database import Database
+    db = Database()
+    try:
+        query = "SELECT MAX(imported_at) as last_update, COUNT(*) as total FROM reestr.pestitsidy;"
+        res = db.execute_query(query)
+        last_date = res[0]['last_update'].strftime("%d.%m.%Y %H:%M") if res[0]['last_update'] else "Нет данных"
+        total = res[0]['total']
+        await message.answer(f"📊 <b>Статус реестра:</b>\nВсего препаратов: <code>{total}</code>\nПоследнее обновление: <code>{last_date}</code>\n\n🕒 Следующее автоматическое обновление: <b>сегодня в 00:00</b>", parse_mode="HTML")
+    except Exception as e:
+        await message.answer(f"❌ Ошибка: {e}")
+
+
+@dp.message(Command("index_popularity"))
+async def cmd_index_popularity(message: types.Message):
+    if not await is_admin(message.from_user.id):
+        await message.answer("⛔ У вас нет прав администратора.")
+        return
+    
+    from utils import index_all_products_popularity
+    # Запускаем в фоне
+    asyncio.create_task(index_all_products_popularity(bot, message.chat.id))
+    await message.answer("🚀 Задача индексации запущена в фоновом режиме. Я буду уведомлять вас о прогрессе.")
+
+
+@dp.message(Command("top_popularity"))
+async def cmd_top_popularity(message: types.Message):
+    if not await is_admin(message.from_user.id):
+        await message.answer("⛔ У вас нет прав администратора.")
+        return
+    
+    from database import Database
+    db = Database()
+    try:
+        query = "SELECT naimenovanie, score FROM reestr.product_popularity ORDER BY score DESC LIMIT 30;"
+        res = db.execute_query(query)
+        if not res:
+            await message.answer("ℹ️ Таблица популярности пуста. Запустите /index_popularity.")
+            return
+            
+        text = "🏆 <b>Топ-30 популярных препаратов:</b>\n\n"
+        for i, row in enumerate(res, 1):
+            text += f"{i}. <b>{row['naimenovanie']}</b> — индекс <code>{row['score']}</code>\n"
+        
+        await message.answer(text, parse_mode="HTML")
+    except Exception as e:
+        await message.answer(f"❌ Ошибка: {e}")
 
 
 @dp.message()
