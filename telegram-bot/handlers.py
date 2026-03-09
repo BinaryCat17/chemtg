@@ -225,38 +225,58 @@ async def handle_message(message: types.Message):
         await message.answer("⛔ Доступ запрещён.")
         return
 
-    wait_msg = await message.answer("⏳ Думаю...")
     user_id = message.from_user.id
     
-    # 1. Формируем историю диалога внутри бота
+    # 1. Инициализируем историю, если её нет
     if user_id not in user_history:
         user_history[user_id] = []
+    
+    # 2. Считаем количество пар Вопрос-Ответ (каждая пара - это 2 записи в user_history)
+    msg_count = len(user_history[user_id]) // 2
+    
+    # 3. Реализуем автоматическую очистку на 15-м сообщении
+    if msg_count >= 15:
+        user_history[user_id] = []
+        msg_count = 0
+        await message.answer("🔄 <b>Автоматическая очистка:</b> История диалога сброшена из-за превышения лимита (15 сообщений).")
+
+    wait_msg = await message.answer("⏳ Думаю...")
         
     history = []
+    # Берем последние 10 записей для контекста LLM
     for msg in user_history[user_id][-10:]:
         if msg.startswith("Пользователь: "):
             history.append({"role": "user", "content": msg.replace("Пользователь: ", "")})
         elif msg.startswith("Ассистент: "):
             history.append({"role": "assistant", "content": msg.replace("Ассистент: ", "")})
 
-    # 2. Делаем запрос через агента
+    # 4. Делаем запрос через агента
     try:
         session_id = str(user_id)
-        
-        # Инициализируем агента с ID сессии
         agent = RegistryAgent(session_id=session_id)
-        
         response = await agent.process_message(message.text, history)
         
-        # 3. Форматируем ответ для Telegram
+        # 5. Форматируем ответ
         formatted_response = format_for_telegram(response)
         
-        # 4. Сохраняем в историю
+        # 6. Добавляем системные напоминания в конец сообщения
+        # Обновляем счетчик после текущего сообщения
+        current_count = msg_count + 1
+        reminder = ""
+        
+        if current_count >= 10:
+            reminder = "\n\n⚠️ <b>Внимание:</b> История перегружена. На 15-м сообщении она будет очищена автоматически."
+        elif current_count >= 5:
+            reminder = "\n\n💡 <b>Совет:</b> Используйте /new, чтобы сбросить контекст и улучшить качество ответов."
+            
+        final_text = f"{formatted_response[:3800]}{reminder}"
+
+        # 7. Сохраняем в историю
         user_history[user_id].append(f"Пользователь: {message.text}")
         user_history[user_id].append(f"Ассистент: {response}")
 
-        # 5. Отправляем пользователю
-        await wait_msg.edit_text(formatted_response[:4000], parse_mode="HTML")
+        # 8. Отправляем пользователю
+        await wait_msg.edit_text(final_text, parse_mode="HTML")
     except Exception as e:
         error_trace = traceback.format_exc()
         print(f"❌ ERROR in handle_message:\n{error_trace}", file=sys.stderr, flush=True)
