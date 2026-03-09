@@ -33,9 +33,12 @@ user_history = TTLCache(maxsize=1000, ttl=86400)
 
 async def set_commands():
     """Установка команд в меню бота для всех пользователей"""
-    commands = [
+    commands_user = [
         BotCommand(command="start", description="Запустить бота"),
         BotCommand(command="new", description="Новый вопрос (сбросить историю)"),
+        BotCommand(command="help", description="Список команд"),
+    ]
+    commands_admin = commands_user + [
         BotCommand(command="listusers", description="Белый список (Admin)"),
         BotCommand(command="adduser", description="Добавить в список (Admin)"),
         BotCommand(command="removeuser", description="Удалить из списка (Admin)"),
@@ -44,10 +47,16 @@ async def set_commands():
         BotCommand(command="update_info", description="Статус реестра (Admin)"),
         BotCommand(command="index_popularity", description="Индексировать популярность (Admin)"),
         BotCommand(command="top_popularity", description="Топ-30 индекса (Admin)"),
-        BotCommand(command="help", description="Список команд"),
     ]
     # Устанавливаем команды для всех пользователей по умолчанию
-    await bot.set_my_commands(commands, scope=types.BotCommandScopeDefault())
+    await bot.set_my_commands(commands_user, scope=types.BotCommandScopeDefault())
+
+    # Устанавливаем админские команды, если задан ADMIN_ID
+    if config.ADMIN_ID:
+        try:
+            await bot.set_my_commands(commands_admin, scope=types.BotCommandScopeChat(chat_id=config.ADMIN_ID))
+        except Exception as e:
+            print(f"[WARNING] Не удалось установить команды для администратора: {e}")
 
 
 # ====================== КОМАНДЫ ======================
@@ -55,24 +64,44 @@ async def set_commands():
 async def cmd_help(message: types.Message):
     # Принудительно обновляем команды при старте
     await set_commands()
-    
+
+    is_user_admin = await is_admin(message.from_user.id)
+    has_access = await is_whitelisted(message.from_user)
+
+    if not has_access:
+        text = (
+            "👋 <b>Добро пожаловать!</b>\n\n"
+            "Я — бот-эксперт по Государственному реестру пестицидов и агрохимикатов.\n"
+            "К сожалению, сейчас бот находится в закрытом режиме тестирования, "
+            "и ваш аккаунт не добавлен в белый список.\n\n"
+            f"Ваш ID для запроса доступа: <code>{message.from_user.id}</code>"
+        )
+        await message.answer(text, parse_mode="HTML")
+        return
+
     text = (
-        "✅ <b>Бот-эксперт по Гостреестру запущен.</b>\n\n"
+        "🌾 <b>Добро пожаловать в бот-эксперт по Гостреестру!</b>\n\n"
+        "Я помогу вам найти информацию о пестицидах, агрохимикатах, проверить действующие вещества, нормы расхода и регламенты применения.\n\n"
         "<b>Основные команды:</b>\n"
         "/new — начать новый диалог (очистить историю)\n"
         "/help — показать это сообщение\n\n"
-        "<b>Администрирование:</b>\n"
-        "/listusers — список разрешенных ID\n"
-        "/adduser ID — добавить ID пользователя\n"
-        "/removeuser ID — удалить ID пользователя\n"
-        "/reload_prompt — перезагрузить файлы промптов\n"
-        "/update_info — статус базы данных\n"
-        "/index_popularity — запустить индексацию популярности\n"
-        "/top_popularity — посмотреть Топ-30 индекса\n"
-        "/debug — техническая информация"
+        "<i>Просто напишите мне название препарата, действующего вещества или ваш вопрос!</i>"
     )
-    await message.answer(text, parse_mode="HTML")
 
+    if is_user_admin:
+        text += (
+            "\n\n🛠 <b>Администрирование:</b>\n"
+            "/listusers — список разрешенных ID\n"
+            "/adduser ID — добавить ID пользователя\n"
+            "/removeuser ID — удалить ID пользователя\n"
+            "/reload_prompt — перезагрузить файлы промптов\n"
+            "/update_info — статус базы данных\n"
+            "/index_popularity — запустить индексацию популярности\n"
+            "/top_popularity — посмотреть Топ-30 индекса\n"
+            "/debug — техническая информация"
+        )
+
+    await message.answer(text, parse_mode="HTML")
 @dp.message(Command("new"))
 async def cmd_new(message: types.Message):
     if not await is_whitelisted(message.from_user):
