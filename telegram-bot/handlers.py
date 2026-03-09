@@ -136,8 +136,12 @@ async def handle_message(message: types.Message):
 
     # 2. Делаем запрос через агента
     try:
-        # Инициализируем агента внутри try, чтобы поймать ошибки в конструкторе (например, в промптах)
-        agent = RegistryAgent()
+        # Используем username если есть, иначе user_id
+        session_id = message.from_user.username or str(user_id)
+        session_id = session_id.replace("@", "")
+        
+        # Инициализируем агента с ID сессии
+        agent = RegistryAgent(session_id=session_id)
         
         response = await agent.process_message(message.text, history)
         

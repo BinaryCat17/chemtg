@@ -12,21 +12,28 @@ import prompts
 import config
 
 class RegistryAgent:
-    def __init__(self):
+    def __init__(self, session_id: str = "default"):
         self.db = Database()
         self.tavily_api_key = config.TAVILY_API_KEY
         self.tavily = TavilyClient(api_key=self.tavily_api_key) if self.tavily_api_key else None
         self.model = config.LLM_MODEL
         self.api_base = os.getenv('LITELLM_BASE_URL')
         self.system_prompt = prompts.get_system_prompt()
-        self.log_path = "/app/agent_log.log"
+        self.session_id = session_id
+        
+        # Создаем директорию логов, если её нет
+        self.log_dir = "/app/logs"
+        os.makedirs(self.log_dir, exist_ok=True)
+        self.log_path = os.path.join(self.log_dir, f"session_{self.session_id}.log")
 
     def _to_log(self, text: str, mode: str = 'a'):
-        """Выводит текст в консоль и записывает в файл agent_log.log"""
-        print(text, flush=True)
+        """Выводит текст в консоль и записывает в файл сессии"""
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        log_entry = f"[{timestamp}] {text}"
+        print(log_entry, flush=True)
         try:
             with open(self.log_path, mode, encoding='utf-8') as f:
-                f.write(text + "\n")
+                f.write(log_entry + "\n")
         except Exception as e:
             print(f"Logging error: {e}")
 
@@ -78,12 +85,13 @@ class RegistryAgent:
 
     async def process_message(self, message: str, history: List[Dict[str, str]]) -> str:
         """Основной цикл обработки сообщения (Reasoning Loop)"""
-        header = f"\n{'='*95}\n🚀 NEW AGENT SESSION | User: {message}\n"
+        header = f"\n{'='*95}\n🚀 NEW AGENT MESSAGE | User: {message}\n"
+        header += f"📊 SESSION ID: {self.session_id}\n"
         header += f"📊 MODEL: {self.model}\n"
         header += f"📊 CONTEXT INFO: Messages={len(history)+2}, System Prompt={len(self.system_prompt)} chars\n"
         header += f"--- SYSTEM PROMPT START ---\n{self.system_prompt}\n--- SYSTEM PROMPT END ---\n"
         header += f"{'='*95}"
-        self._to_log(header, mode='w')
+        self._to_log(header, mode='a')
 
         messages = [{"role": "system", "content": self.system_prompt}]
         for item in history:

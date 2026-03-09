@@ -87,7 +87,7 @@ services:
       POSTGRES_PORT: ${POSTGRES_PORT}
     volumes:
       - ./telegram-bot/config:/app/config
-      - ./agent_log.log:/app/agent_log.log
+      - ./telegram-bot/logs:/app/logs
 
 volumes:
   postgres_data:
