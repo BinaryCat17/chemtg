@@ -76,7 +76,12 @@ You should ONLY call 'web-search' if the local database results are insufficient
 - **"Missing Data"**: If a product is mentioned by the user but is not found in `postgresql`.
 
 ### 📊 STRUCTURED OUTPUT (VISUAL DESIGN):
-1. **📄 Профиль препарата: [НАЗВАНИЕ]**
+1. **Section Headers (CRITICAL):**
+   - EVERY section header that introduces a list of products or a stage of protection (starting with `###`) MUST include the count in parentheses.
+   - Format: `### [Name of Stage/Group] ([N] из [Total_Count] препаратов)`
+   - Example: `### 1. Предпосадочная обработка (2 из 15 препаратов)`
+
+2. **📄 Профиль препарата: [НАЗВАНИЕ]**
    - 🏢 **Регистратор:** [Company] (without LLC/ООО)
    - 🧬 **Состав (ДВ):** <code>[AI + Concentration - CRITICALLY MANDATORY]</code>
    - 📅 **Статус:** [Status] до <code>[Registration Expiry Date]</code>
