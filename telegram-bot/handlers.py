@@ -40,6 +40,7 @@ async def set_commands():
         BotCommand(command="removeuser", description="Удалить из списка (Admin)"),
         BotCommand(command="reload_prompt", description="Обновить промпты (Admin)"),
         BotCommand(command="debug", description="Проверить подключение"),
+        BotCommand(command="update_info", description="Статус реестра (Admin)"),
         BotCommand(command="help", description="Список команд"),
     ]
     # Устанавливаем команды для всех пользователей по умолчанию
@@ -47,6 +48,22 @@ async def set_commands():
 
 
 # ====================== КОМАНДЫ ======================
+@dp.message(Command("update_info"))
+async def cmd_update_info(message: types.Message):
+    if not await is_admin(message.from_user.id):
+        await message.answer("⛔ У вас нет прав администратора.")
+        return
+    
+    from database import Database
+    db = Database()
+    try:
+        query = "SELECT MAX(imported_at) as last_update, COUNT(*) as total FROM reestr.pestitsidy;"
+        res = db.execute_query(query)
+        last_date = res[0]['last_update'].strftime("%d.%m.%Y %H:%M")
+        total = res[0]['total']
+        await message.answer(f"📊 <b>Статус реестра:</b>\nВсего препаратов: <code>{total}</code>\nПоследнее обновление: <code>{last_date}</code>\n\n🕒 Следующее автоматическое обновление: <b>сегодня в 00:00</b>", parse_mode="HTML")
+    except Exception as e:
+        await message.answer(f"❌ Ошибка: {e}")
 @dp.message(Command("start", "help"))
 async def cmd_help(message: types.Message):
     # Принудительно обновляем команды при старте

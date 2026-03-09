@@ -1,3 +1,4 @@
-﻿requests
+requests
 psycopg2-binary
 lxml
+schedule

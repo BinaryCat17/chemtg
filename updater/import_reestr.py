@@ -130,10 +130,31 @@ def import_pest(xml_path):
     conn.close()
     print("✅ Пестициды + применения загружены")
 
+import requests, psycopg2, json, os, zipfile, schedule, time, sys
+from datetime import datetime
+from lxml import etree
+
+...
+
+def run_import():
+    try:
+        print(f"🚀 [START] Обновление реестра {datetime.now()}")
+        agro_xml = download_and_extract(AGRO_URL, "agrokhimikaty")
+        pest_xml = download_and_extract(PEST_URL, "pestitsidy")
+        import_agro(agro_xml)
+        import_pest(pest_xml)
+        print(f"🎉 [SUCCESS] Реестр обновлен! {datetime.now()}")
+    except Exception as e:
+        print(f"❌ [ERROR] Ошибка при обновлении: {e}")
+
 if __name__ == "__main__":
-    print(f"🚀 Обновление реестра {datetime.now()}")
-    agro_xml = download_and_extract(AGRO_URL, "agrokhimikaty")
-    pest_xml = download_and_extract(PEST_URL, "pestitsidy")
-    import_agro(agro_xml)
-    import_pest(pest_xml)
-    print("🎉 Реестр полностью нормализован и готов к удобному просмотру!")
+    if "--once" in sys.argv:
+        run_import()
+    else:
+        print("🕒 Планировщик запущен. Обновление ежедневно в 00:00.")
+        # Планируем задачу на полночь
+        schedule.every().day.at("00:00").do(run_import)
+        
+        while True:
+            schedule.run_pending()
+            time.sleep(60)

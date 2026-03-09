@@ -44,7 +44,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - ./updater:/app
-    command: sh -c "python /app/import_reestr.py && sleep 1209600 && while true; do python /app/import_reestr.py && sleep 1209600; done"
+    command: python /app/import_reestr.py
 
   litellm:
     image: ghcr.io/berriai/litellm:main-latest
