@@ -168,7 +168,60 @@ async def index_all_products_popularity(bot, chat_id):
         json.dump(index_data, f, ensure_ascii=False, indent=2)
 
     print(f"\n{'='*60}\n✅ ИНДЕКСАЦИЯ ЗАВЕРШЕНА. Всего упоминаний: {total_found_mentions}\n{'='*60}", flush=True)
-    await bot.send_message(chat_id, f"✅ Индексация завершена! Всего найдено упоминаний: {total_found_mentions}. Лог в {log_file}")
+    
+    print("🏢 Добавляем индексы по размеру портфеля компаний для пестицидов...", flush=True)
+    db.execute_query("""
+    WITH company_counts AS (
+        SELECT registrant, COUNT(*) as p_count 
+        FROM reestr.pestitsidy 
+        WHERE status = 'Действует' 
+        GROUP BY registrant
+    ),
+    product_scores AS (
+        SELECT p.naimenovanie, MAX(ROUND(LN(c.p_count) * 5)) as bonus
+        FROM reestr.pestitsidy p
+        JOIN company_counts c ON p.registrant = c.registrant
+        WHERE p.status = 'Действует' AND c.p_count > 1
+        GROUP BY p.naimenovanie
+    )
+    INSERT INTO reestr.product_popularity (naimenovanie, score, updated_at)
+    SELECT naimenovanie, bonus, NOW()
+    FROM product_scores
+    ON CONFLICT (naimenovanie) 
+    DO UPDATE SET score = reestr.product_popularity.score + EXCLUDED.score, updated_at = NOW();
+    """)
+    
+    print("🌱 Индексируем популярность агрохимикатов по размеру портфеля компаний...", flush=True)
+    db.execute_query("""
+    CREATE TABLE IF NOT EXISTS reestr.agrokhimikaty_popularity (
+        preparat text PRIMARY KEY,
+        score integer DEFAULT 0,
+        updated_at timestamp without time zone DEFAULT now()
+    );
+    """)
+    
+    db.execute_query("""
+    WITH company_counts AS (
+        SELECT registrant, COUNT(*) as p_count 
+        FROM reestr.agrokhimikaty 
+        WHERE status = 'Действует' 
+        GROUP BY registrant
+    ),
+    product_scores AS (
+        SELECT p.preparat, MAX(ROUND(LN(c.p_count) * 5)) as bonus
+        FROM reestr.agrokhimikaty p
+        JOIN company_counts c ON p.registrant = c.registrant
+        WHERE p.status = 'Действует' AND c.p_count > 1
+        GROUP BY p.preparat
+    )
+    INSERT INTO reestr.agrokhimikaty_popularity (preparat, score, updated_at)
+    SELECT preparat, bonus, NOW()
+    FROM product_scores
+    ON CONFLICT (preparat) 
+    DO UPDATE SET score = EXCLUDED.score, updated_at = NOW();
+    """)
+
+    await bot.send_message(chat_id, f"✅ Индексация завершена! Найдено упоминаний: {total_found_mentions}. Также добавлены бонусы по размеру портфеля компаний для пестицидов и агрохимикатов. Лог в {log_file}")
 
 
 async def is_admin(user_id: int) -> bool:
