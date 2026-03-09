@@ -31,22 +31,40 @@ dp = Dispatcher()
 user_history = TTLCache(maxsize=1000, ttl=86400)
 
 async def set_commands():
-    """Установка команд в меню бота"""
+    """Установка команд в меню бота для всех пользователей"""
     commands = [
         BotCommand(command="start", description="Запустить бота"),
         BotCommand(command="new", description="Новый вопрос (сбросить историю)"),
+        BotCommand(command="listusers", description="Белый список (Admin)"),
+        BotCommand(command="adduser", description="Добавить в список (Admin)"),
+        BotCommand(command="removeuser", description="Удалить из списка (Admin)"),
+        BotCommand(command="reload_prompt", description="Обновить промпты (Admin)"),
         BotCommand(command="debug", description="Проверить подключение"),
         BotCommand(command="help", description="Список команд"),
-        BotCommand(command="reload_prompt", description="Обновить промпты"),
     ]
-    await bot.set_my_commands(commands)
+    # Устанавливаем команды для всех пользователей по умолчанию
+    await bot.set_my_commands(commands, scope=types.BotCommandScopeDefault())
 
 
 # ====================== КОМАНДЫ ======================
 @dp.message(Command("start", "help"))
 async def cmd_help(message: types.Message):
-    text = "✅ Бот готов.\n\n/new — новый вопрос\n/debug — проверить подключение\n/reload_prompt — обновить промпты"
-    await message.answer(text)
+    # Принудительно обновляем команды при старте
+    await set_commands()
+    
+    text = (
+        "✅ <b>Бот-эксперт по Гостреестру запущен.</b>\n\n"
+        "<b>Основные команды:</b>\n"
+        "/new — начать новый диалог (очистить историю)\n"
+        "/help — показать это сообщение\n\n"
+        "<b>Администрирование:</b>\n"
+        "/listusers — список разрешенных пользователей\n"
+        "/adduser @username — добавить пользователя\n"
+        "/removeuser @username — удалить пользователя\n"
+        "/reload_prompt — перезагрузить файлы промптов\n"
+        "/debug — техническая информация"
+    )
+    await message.answer(text, parse_mode="HTML")
 
 @dp.message(Command("new"))
 async def cmd_new(message: types.Message):
@@ -55,7 +73,7 @@ async def cmd_new(message: types.Message):
         return
     if message.from_user.id in user_history:
         del user_history[message.from_user.id]
-    await message.answer("🆕 Новый разговор начат. История сброшена.")
+    await message.answer("🆕 История диалога сброшена. О чем хотите спросить?")
 
 
 @dp.message(Command("debug"))
@@ -63,47 +81,72 @@ async def cmd_debug(message: types.Message):
     if not await is_whitelisted(message.from_user):
         await message.answer("⛔ Доступ запрещён.")
         return
-    await message.answer("🔍 Смотри логи контейнера telegram-bot")
+    status = "✅ Подключено"
+    await message.answer(f"🔍 <b>Debug Info:</b>\nСтатус: {status}\nUser ID: <code>{message.from_user.id}</code>\nAdmin: <code>{await is_admin(message.from_user.username)}</code>", parse_mode="HTML")
 
 
 @dp.message(Command("adduser"))
 async def cmd_adduser(message: types.Message):
     if not await is_admin(message.from_user.username):
+        await message.answer("⛔ У вас нет прав администратора.")
         return
+    
+    parts = message.text.split()
+    if len(parts) < 2:
+        await message.answer("⚠️ Использование: <code>/adduser @username</code>", parse_mode="HTML")
+        return
+
+    username = parts[1].strip().lower().replace("@", "")
+    if not username:
+        await message.answer("⚠️ Некорректный username.")
+        return
+
+    whitelist_set.add(username)
     try:
-        username = message.text.split(maxsplit=1)[1].strip().lower().replace("@", "")
-        whitelist_set.add(username)
         WHITELIST_FILE.write_text(
             json.dumps(list(whitelist_set), indent=2, ensure_ascii=False),
             encoding="utf-8"
         )
-        await message.answer(f"✅ Добавлен: @{username}")
-    except:
-        await message.answer("Использование: /adduser @username")
+        await message.answer(f"✅ Пользователь <b>@{username}</b> добавлен в белый список.", parse_mode="HTML")
+    except Exception as e:
+        await message.answer(f"❌ Ошибка при сохранении: {e}")
 
 
 @dp.message(Command("removeuser"))
 async def cmd_removeuser(message: types.Message):
     if not await is_admin(message.from_user.username):
+        await message.answer("⛔ У вас нет прав администратора.")
         return
-    try:
-        username = message.text.split(maxsplit=1)[1].strip().lower().replace("@", "")
+    
+    parts = message.text.split()
+    if len(parts) < 2:
+        await message.answer("⚠️ Использование: <code>/removeuser @username</code>", parse_mode="HTML")
+        return
+
+    username = parts[1].strip().lower().replace("@", "")
+    if username in whitelist_set:
         whitelist_set.discard(username)
-        WHITELIST_FILE.write_text(
-            json.dumps(list(whitelist_set), indent=2, ensure_ascii=False),
-            encoding="utf-8"
-        )
-        await message.answer(f"✅ Удалён: @{username}")
-    except:
-        await message.answer("Использование: /removeuser @username")
+        try:
+            WHITELIST_FILE.write_text(
+                json.dumps(list(whitelist_set), indent=2, ensure_ascii=False),
+                encoding="utf-8"
+            )
+            await message.answer(f"✅ Пользователь <b>@{username}</b> удален из белого списка.", parse_mode="HTML")
+        except Exception as e:
+            await message.answer(f"❌ Ошибка при сохранении: {e}")
+    else:
+        await message.answer(f"❓ Пользователь @{username} не найден в списке.")
 
 
 @dp.message(Command("listusers"))
 async def cmd_listusers(message: types.Message):
     if not await is_admin(message.from_user.username):
+        await message.answer("⛔ У вас нет прав администратора.")
         return
-    users = "\n".join([f"@{u}" for u in sorted(whitelist_set)]) or "Пусто"
-    await message.answer(f"📋 Белый список ({len(whitelist_set)}):\n{users}")
+    
+    load_whitelist() # Перезагрузим на случай ручных правок файла
+    users = "\n".join([f"• @{u}" for u in sorted(whitelist_set)]) or "<i>Список пуст</i>"
+    await message.answer(f"📋 <b>Белый список ({len(whitelist_set)}):</b>\n{users}", parse_mode="HTML")
 
 
 @dp.message(Command("reload_prompt"))
