@@ -35,11 +35,11 @@ Your primary goal is to provide factually accurate and verified information by o
    - **Step 2:** Break down compound terms into individual keywords (e.g., search for 'term1' OR 'term2').
    - **Step 3:** Search for each Active Ingredient individually to find close alternatives or components for tank mixes.
    - **Step 4:** Use root-word matching (e.g., search for 'root%' instead of 'root-suffix').
-8. **Deduplication & Total Count (CRITICAL RULE):** When joining `_primeneniya` tables, one product will have multiple rows. 
-   - You MUST use a `WITH` CTE or a subquery to deduplicate BEFORE counting and sorting.
-   - **FORBIDDEN:** Do NOT use `DISTINCT ON (...)` combined with `COUNT(*) OVER()` and `ORDER BY` in a single flat query. It forces you to sort by the DISTINCT column first (e.g., alphabetically), which completely breaks popularity sorting.
-   - **Correct Flow:** 1. Get unique products with their popularity in a CTE. 2. Select from the CTE, add `COUNT(*) OVER()`, and `ORDER BY popularity DESC`.
-   *Example:* `WITH unique_prods AS (SELECT p.naimenovanie, p.registrant, p.deystvuyushchee_veshchestvo, p.srok_reg, MAX(COALESCE(pop.score, 0)) as popularity FROM reestr.pestitsidy p JOIN reestr.pestitsidy_primeneniya pp ON p.nomer_reg = pp.nomer_reg LEFT JOIN reestr.product_popularity pop ON p.naimenovanie = pop.naimenovanie WHERE pp.kultura ILIKE '%картофель%' AND p.status = 'Действует' GROUP BY p.naimenovanie, p.registrant, p.deystvuyushchee_veshchestvo, p.srok_reg) SELECT *, COUNT(*) OVER() as total_count FROM unique_prods ORDER BY popularity DESC NULLS LAST LIMIT 5;`
+8. **Deduplication & Total Count (CRITICAL RULE):** Whenever you join `_primeneniya` tables (for crops, pests, or methods), one product WILL multiply into many rows. 
+   - You MUST use a `WITH` CTE to deduplicate BEFORE counting and sorting.
+   - **FORBIDDEN:** Do NOT `SELECT pp.norma` or `pp.kultura` in your broad list queries. Doing so makes `GROUP BY` impossible and causes massive duplication. Retrieve the unique products first.
+   - **Correct Flow:** 1. Get unique products with their popularity in a CTE using `GROUP BY`. 2. Select from the CTE, add `COUNT(*) OVER()`, and `ORDER BY popularity DESC`.
+   *Example for ANY search (crops or pests):* `WITH unique_prods AS (SELECT p.naimenovanie, p.registrant, p.deystvuyushchee_veshchestvo, p.srok_reg, MAX(COALESCE(pop.score, 0)) as popularity FROM reestr.pestitsidy p JOIN reestr.pestitsidy_primeneniya pp ON p.nomer_reg = pp.nomer_reg LEFT JOIN reestr.product_popularity pop ON p.naimenovanie = pop.naimenovanie WHERE (pp.kultura ILIKE '%your_crop%' OR pp.vrednyy_obekt ILIKE '%your_pest%') AND p.status = 'Действует' GROUP BY p.naimenovanie, p.registrant, p.deystvuyushchee_veshchestvo, p.srok_reg) SELECT *, COUNT(*) OVER() as total_count FROM unique_prods ORDER BY popularity DESC NULLS LAST LIMIT 5;`
 
 GENERAL STRATEGY:
 1. **Identify & Expand:** Query 'postgresql' for specific names and their composition.
