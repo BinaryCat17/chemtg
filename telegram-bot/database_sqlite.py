@@ -2,16 +2,14 @@ import sqlite3
 import os
 
 class Database:
-    def __init__(self):
-        # По умолчанию создаем файл reestr.db в корне папки бота
-        self.db_path = os.getenv('SQLITE_DB_PATH', 'reestr.db')
+    def __init__(self, db_path="reestr.db"):
+        self.db_path = os.getenv('SQLITE_DB_PATH', db_path)
         self.conn = None
 
     def _connect(self):
         if self.conn is None:
-            # Создаем соединение. check_same_thread=False нужен для работы в разных потоках asyncio
-            self.conn = sqlite3.connect(self.db_path, check_same_thread=False)
-            # Включаем возврат словарей (доступ по именам колонок)
+            self.conn = sqlite3.connect(self.db_path)
+            # Включаем возврат словарей вместо кортежей
             self.conn.row_factory = sqlite3.Row
         return self.conn
 
@@ -21,13 +19,13 @@ class Database:
             cur = conn.cursor()
             cur.execute(query)
             
-            # Если это SELECT запрос
+            # Если запрос SELECT, возвращаем данные
             if query.strip().upper().startswith("SELECT"):
                 rows = cur.fetchall()
-                # Превращаем sqlite3.Row в обычные словари для совместимости с логикой бота
+                # Превращаем Row-объекты в обычные словари для совместимости с кодом
                 return [dict(row) for row in rows]
             
-            # Для модифицирующих запросов (INSERT/UPDATE/DELETE)
+            # Для INSERT/UPDATE/DELETE фиксируем изменения
             conn.commit()
             return {"status": "success"}
         except Exception as e:
@@ -36,28 +34,26 @@ class Database:
             return {"error": str(e)}
 
     def get_schema(self):
-        """Возвращает описание таблиц SQLite для AI-промпта"""
+        """Возвращает описание всех таблиц для AI промпта (версия SQLite)"""
         try:
             conn = self._connect()
             cur = conn.cursor()
             
-            # Получаем список всех таблиц, созданных пользователем
+            # Получаем список всех таблиц
             cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';")
             tables = cur.fetchall()
             
-            if not tables:
-                return "Database is empty. No tables found."
-
             schema_text = "Database schema (SQLite):\n"
             for table in tables:
                 table_name = table['name']
                 schema_text += f"\nTable: {table_name}\n"
                 
-                # Получаем инфо о колонках (cid, name, type, notnull, dflt_value, pk)
+                # Получаем колонки для каждой таблицы
                 cur.execute(f"PRAGMA table_info({table_name});")
                 columns = cur.fetchall()
                 for col in columns:
-                    schema_text += f" - {col['name']} ({col['type']})\n"
+                    # col[1] - имя, col[2] - тип
+                    schema_text += f" - {col[1]} ({col[2]})\n"
             
             return schema_text
         except Exception as e:

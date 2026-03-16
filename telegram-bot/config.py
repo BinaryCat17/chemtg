@@ -20,7 +20,13 @@ except ValueError:
     ADMIN_ID = 0
     print(f"[ERROR] Некорректный ADMIN_ID в .env: {admin_id_raw}", flush=True)
 
-CONFIG_DIR = Path("/app/config")
+# Определение базовой директории конфигурации
+if os.path.exists("/app/config"):
+    CONFIG_DIR = Path("/app/config")
+else:
+    # Если мы не в докере, ищем папку config рядом с кодом
+    CONFIG_DIR = Path(os.getcwd()) / "config"
+
 WHITELIST_FILE = CONFIG_DIR / "whitelist.json"
 USER_PROMPT_FILE = CONFIG_DIR / "user_promt.txt"
 SYSTEM_PROMPT_FILE = CONFIG_DIR / "system_promt.txt"

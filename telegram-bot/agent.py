@@ -3,6 +3,7 @@ import re
 import os
 import asyncio
 import time
+import yaml
 from datetime import datetime, date
 from typing import List, Dict, Any
 from litellm import acompletion
@@ -18,11 +19,26 @@ class RegistryAgent:
         self.tavily = TavilyClient(api_key=self.tavily_api_key) if self.tavily_api_key else None
         self.model = config.LLM_MODEL
         self.api_base = os.getenv('LITELLM_BASE_URL')
+        
+        # Загружаем конфиг LiteLLM если он есть
+        self.litellm_config = {}
+        config_path = os.getenv("CONFIG_YAML_PATH", os.path.join(os.getcwd(), "config.yaml"))
+        if os.path.exists(config_path):
+            try:
+                with open(config_path, 'r', encoding='utf-8') as f:
+                    self.litellm_config = yaml.safe_load(f)
+                print(f"✅ LiteLLM config.yaml loaded: {len(self.litellm_config.get('model_list', []))} models from {config_path}")
+            except Exception as e:
+                print(f"⚠️ Ошибка загрузки config.yaml: {e}")
+
+        # Если мы не в Докере, сбрасываем адрес прокси-сервера
+        if not self.api_base or "litellm:4000" in self.api_base:
+            self.api_base = None
         self.system_prompt = prompts.get_system_prompt()
         self.session_id = session_id
         
         # Создаем директорию логов, если её нет
-        self.log_dir = "/app/logs"
+        self.log_dir = os.path.join(os.getcwd(), "logs")
         os.makedirs(self.log_dir, exist_ok=True)
         self.log_path = os.path.join(self.log_dir, f"session_{self.session_id}.log")
 
@@ -85,9 +101,28 @@ class RegistryAgent:
 
     async def process_message(self, message: str, history: List[Dict[str, str]]) -> str:
         """Основной цикл обработки сообщения (Reasoning Loop)"""
+        # Ищем параметры модели в конфиге
+        model_params = {}
+        if self.litellm_config and 'model_list' in self.litellm_config:
+            for item in self.litellm_config['model_list']:
+                if item.get('model_name') == self.model:
+                    model_params = item.get('litellm_params', {})
+                    break
+
+        target_model = model_params.get('model', self.model)
+        target_api_key = model_params.get('api_key')
+        
+        # Если API ключ указан через os.environ/
+        if isinstance(target_api_key, str) and target_api_key.startswith("os.environ/"):
+            env_var = target_api_key.replace("os.environ/", "")
+            target_api_key = os.getenv(env_var)
+            
+        if not target_api_key:
+            target_api_key = os.getenv("GEMINI_API_KEY") or os.getenv("XAI_API_KEY") or "sk-no-key-required"
+
         header = f"\n{'='*95}\n🚀 NEW AGENT MESSAGE | User: {message}\n"
         header += f"📊 SESSION ID: {self.session_id}\n"
-        header += f"📊 MODEL: {self.model}\n"
+        header += f"📊 MODEL: {self.model} -> {target_model}\n"
         header += f"📊 CONTEXT INFO: Messages={len(history)+2}, System Prompt={len(self.system_prompt)} chars\n"
         header += f"{'='*95}"
         self._to_log(header, mode='a')
@@ -102,16 +137,17 @@ class RegistryAgent:
         
         while iteration < max_iterations:
             iteration += 1
-            self._to_log(f"\n[STEP {iteration}] Requesting LiteLLM ({self.model})...")
+            self._to_log(f"\n[STEP {iteration}] Requesting LiteLLM ({target_model})...")
             start_time = time.time()
             
             try:
+                # В EXE режиме LiteLLM использует параметры из config.yaml или переменные окружения
                 response = await acompletion(
-                    model=f"openai/{self.model}",
+                    model=target_model,
                     messages=messages,
                     temperature=0.1,
                     api_base=self.api_base,
-                    api_key="sk-no-key-required"
+                    api_key=target_api_key
                 )
                 
                 duration = time.time() - start_time
