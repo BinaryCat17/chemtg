@@ -174,7 +174,7 @@ class RegistryAgent:
                     self._to_log("⚠️ WARNING: No !@! markers detected.")
                     messages.append({
                         "role": "user", 
-                        "content": "ERROR: Your response must be wrapped in `!@!{\"tool\": \"...\"}!@!` markers. If this is a final answer, use `answer-chat`. Ensure all data is verified via `postgresql` before answering. Do not apologize, just provide the corrected tool call."
+                        "content": "ERROR: Your response must be wrapped in `!@!{\"tool\": \"...\"}!@!` markers. If this is a final answer, use `answer-chat`. Ensure all data is verified via `sqlite` before answering. Do not apologize, just provide the corrected tool call."
                     })
                     continue
 
@@ -217,11 +217,11 @@ class RegistryAgent:
                             self._to_log(f"DEBUG: Missing 'tool' key in JSON: {cleaned_call}")
                             raise KeyError("tool")
                         
-                        if tool == "postgresql":
+                        if tool == "sqlite":
                             query = call_data.get("query") or call_data.get('"query"')
                             if not query: raise ValueError("Missing 'query' parameter.")
                             result = await self.run_sql(query)
-                            tool_results_combined.append(f"--- TOOL RESULT (postgresql) ---\n{result}")
+                            tool_results_combined.append(f"--- TOOL RESULT (sqlite) ---\n{result}")
                             
                         elif tool == "web-search":
                             query = call_data.get("query") or call_data.get('"query"')

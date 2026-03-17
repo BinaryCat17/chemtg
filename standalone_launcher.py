@@ -28,7 +28,7 @@ else:
     exe_dir = bundle_dir
 
 # АБСОЛЮТНЫЕ ПУТИ
-DB_PATH = os.path.join(exe_dir, "reestr.db")
+DB_PATH = os.path.join(exe_dir, "data", "reestr.db")
 os.environ['SQLITE_DB_PATH'] = DB_PATH
 os.environ['CONFIG_YAML_PATH'] = os.path.join(exe_dir, "config.yaml")
 os.environ['DATA_DIR'] = os.path.join(exe_dir, "data")
@@ -124,7 +124,7 @@ def generate_xray_config(p):
     if not outbound_stream.get("tlsSettings"):
         del outbound_stream["tlsSettings"]
 
-    with open(os.path.join(exe_dir, "config.json"), "w") as f:
+    with open(os.path.join(exe_dir, "data", "vpn", "config.json"), "w") as f:
         json.dump(config, f, indent=2)
     return True
 
@@ -183,15 +183,15 @@ def test_proxy():
     return False
 
 def start_vpn():
-    xray_exe = os.path.join(exe_dir, "xray.exe" if os.name == 'nt' else "xray")
+    xray_exe = os.path.join(exe_dir, "bin", "xray.exe" if os.name == 'nt' else "xray")
     if not os.path.exists(xray_exe):
-        print("⚠️ xray.exe не найден.")
+        print(f"⚠️ {xray_exe} не найден.")
         return False
 
     # Проверка дата-файлов Xray
     for f in ["geoip.dat", "geosite.dat"]:
-        if not os.path.exists(os.path.join(exe_dir, f)):
-            print(f"⚠️ Файл {f} не найден в папке с EXE. Xray может не работать.")
+        if not os.path.exists(os.path.join(exe_dir, "bin", f)):
+            print(f"⚠️ Файл {f} не найден в папке bin. Xray может не работать.")
 
     link = fetch_subscription()
     if not link:
@@ -202,11 +202,11 @@ def start_vpn():
     if p and generate_xray_config(p):
         flags = 0x08000000 if os.name == 'nt' else 0
         subprocess.Popen(
-            [xray_exe, "-c", os.path.join(exe_dir, "config.json")], 
+            [xray_exe, "-c", os.path.join(exe_dir, "data", "vpn", "config.json")], 
             creationflags=flags, 
             stdout=subprocess.DEVNULL, 
             stderr=subprocess.DEVNULL,
-            cwd=exe_dir
+            cwd=os.path.join(exe_dir, "bin")
         )
         
         time.sleep(5)

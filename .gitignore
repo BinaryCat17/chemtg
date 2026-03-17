@@ -1,14 +1,27 @@
-﻿.env
-agent_log.log
-telegram-bot/logs
+# Env and logs
+.env
+*.log
+logs/
+telegram-bot/logs/
+
+# Build and Packaging
+build/
+dist/
+__pycache__/
+*.spec
 *.exe
-build
-__pycache__
-data
-dist
-venv
-venv_linux
-xray
-geoip.dat
-geosite.dat
+
+# Python
+venv/
+venv_linux/
+.venv/
+.pytest_cache/
+
+# Project Binaries and Data
+bin/
+data/
 reestr.db
+
+# VPN Config (Generated)
+config.json
+data/vpn/config.json
