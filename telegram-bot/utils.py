@@ -42,136 +42,23 @@ def format_for_telegram(text: str) -> str:
 
 
 async def index_all_products_popularity(bot, chat_id):
-    """Интеллектуальная индексация популярности препаратов с защитой от 'тезок' ДВ"""
+    """Индексация популярности на основе размера портфеля компаний и новизны препаратов"""
     db = Database()
-    tavily_api_key = config.TAVILY_API_KEY
-    if not tavily_api_key:
-        await bot.send_message(chat_id, "❌ API ключ Tavily не найден.")
-        return
     
-    tavily = TavilyClient(api_key=tavily_api_key)
-    log_dir = os.path.join(os.getcwd(), "logs")
-    os.makedirs(log_dir, exist_ok=True)
-    log_file = os.path.join(log_dir, "latest_index.json")
+    print(f"\n{'='*60}\n🚀 ЗАПУСК ИНДЕКСАЦИИ ПОПУЛЯРНОСТИ (v3: Портфель + Новизна)\n{'='*60}", flush=True)
+    await bot.send_message(chat_id, "🚀 Начинаю индексацию популярности (анализ портфеля компаний и новизны препаратов)...")
     
-    print(f"\n{'='*60}\n🚀 ЗАПУСК ИНДЕКСАЦИИ ПОПУЛЯРНОСТИ (v2: Защита от ДВ)\n{'='*60}", flush=True)
+    # Создаем таблицы, если их нет
+    db.execute_query("CREATE TABLE IF NOT EXISTS product_popularity (naimenovanie TEXT PRIMARY KEY, score INTEGER DEFAULT 0, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);")
+    db.execute_query("CREATE TABLE IF NOT EXISTS agrokhimikaty_popularity (preparat TEXT PRIMARY KEY, score INTEGER DEFAULT 0, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);")
     
-    # 0. Загружаем все уникальные названия ДВ для фильтрации тезок
-    dv_names_query = "SELECT DISTINCT LOWER(TRIM(dv.value->>'veshchestvo')) as name FROM pestitsidy, json_each(deystvuyushchee_veshchestvo) dv;"
-    dv_rows = db.execute_query(dv_names_query)
-    all_dv_names = {row['name'] for row in dv_rows if row['name']}
-    
-    # 1. Получаем уникальные комбинации ДВ и список имен препаратов для каждой
-    # В SQLite используем group_concat вместо string_agg и подзапрос для комбинации
-    query = """
-    SELECT 
-        (SELECT group_concat(sub.name, ' + ')
-         FROM (SELECT dv.value->>'veshchestvo' as name FROM json_each(p.deystvuyushchee_veshchestvo) dv ORDER BY name) sub
-        ) as combination,
-        group_concat(DISTINCT p.naimenovanie) as products
-    FROM pestitsidy p
-    WHERE p.status = 'Действует'
-    GROUP BY combination
-    HAVING combination IS NOT NULL;
-    """
-    combinations = db.execute_query(query)
-    
-    if not combinations:
-        print("❌ Данные для индексации не найдены в базе.", flush=True)
-        await bot.send_message(chat_id, "❌ Данные для индексации не найдены.")
-        return
-
-    total_combs = len(combinations)
-    print(f"📊 Найдено уникальных комбинаций ДВ: {total_combs}", flush=True)
-    await bot.send_message(chat_id, f"🚀 Начинаю умную индексацию ({total_combs} комбинаций ДВ). Препараты-тезки ДВ получат индекс 1.")
-    
-    # Создаем таблицу, если ее нет
-    db.execute_query("""
-    CREATE TABLE IF NOT EXISTS product_popularity (
-        naimenovanie TEXT PRIMARY KEY,
-        score INTEGER DEFAULT 0,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
-    """)
+    # Сброс старых очков
     db.execute_query("UPDATE product_popularity SET score = 0;")
+    db.execute_query("UPDATE agrokhimikaty_popularity SET score = 0;")
 
-    index_data = {
-        "timestamp": datetime.now().isoformat(),
-        "total_combinations": total_combs,
-        "results": []
-    }
-
-    processed = 0
-    total_found_mentions = 0
-    
-    for row in combinations:
-        dv_text = row['combination']
-        # В SQLite group_concat возвращает строку через запятую
-        product_names = row['products'].split(',') if row['products'] else []
-        start_time = time.time()
-        
-        try:
-            print(f"🔍 [{processed+1}/{total_combs}] Поиск по ДВ: {dv_text}...", flush=True)
-            search_query = f"препараты фунгициды гербициды состав {dv_text}"
-            search_result = tavily.search(query=search_query, search_depth="basic", max_results=10)
-            
-            combined_text = ""
-            for r in search_result.get('results', []):
-                combined_text += f" {r.get('title', '')} {r.get('content', '')}"
-            
-            combined_text = combined_text.lower()
-            found_in_this_step = []
-
-            for name in product_names:
-                base_name = name.lower().replace('"', '').replace('«', '').replace('»', '').split(',')[0].strip()
-                
-                if base_name in all_dv_names:
-                    score_to_add = 1
-                    mentions = 0 
-                else:
-                    mentions = combined_text.count(base_name)
-                    score_to_add = mentions
-
-                if score_to_add > 0:
-                    upsert_query = f"""
-                    INSERT INTO product_popularity (naimenovanie, score, updated_at)
-                    VALUES ('{name.replace("'", "''")}', {score_to_add}, CURRENT_TIMESTAMP)
-                    ON CONFLICT (naimenovanie) DO UPDATE SET score = score + EXCLUDED.score, updated_at = CURRENT_TIMESTAMP;
-                    """
-                    db.execute_query(upsert_query)
-                    total_found_mentions += score_to_add
-                    found_in_this_step.append(f"{name}({score_to_add})")
-            
-            if found_in_this_step:
-                print(f"   ✅ Найдено: {', '.join(found_in_this_step)}", flush=True)
-            
-            index_data["results"].append({
-                "combination": dv_text,
-                "found_products": found_in_this_step
-            })
-            
-            if processed % 10 == 0:
-                with open(log_file, "w", encoding="utf-8") as f:
-                    json.dump(index_data, f, ensure_ascii=False, indent=2)
-            
-        except Exception as e:
-            print(f"   ❌ Ошибка: {e}", flush=True)
-            await asyncio.sleep(2)
-            
-        processed += 1
-        if processed % 20 == 0:
-            await bot.send_message(chat_id, f"⏳ Обработано {processed} из {total_combs}. Упоминаний: {total_found_mentions}...")
-        
-        elapsed = time.time() - start_time
-        wait_time = max(0.1, 1.1 - elapsed)
-        await asyncio.sleep(wait_time)
-
-    with open(log_file, "w", encoding="utf-8") as f:
-        json.dump(index_data, f, ensure_ascii=False, indent=2)
-
-    print(f"\n{'='*60}\n✅ ИНДЕКСАЦИЯ ЗАВЕРШЕНА. Всего упоминаний: {total_found_mentions}\n{'='*60}", flush=True)
-    
-    print("🏢 Добавляем индексы по размеру портфеля компаний для пестицидов...", flush=True)
+    # 1. Индексация Пестицидов
+    print("🏢 Анализ портфеля и новизны пестицидов...", flush=True)
+    # Формула: LOG10(кол-во препаратов компании) * 3 + Бонус за новизну (регистрация 2024-2026 = +2, 2022-2023 = +1)
     db.execute_query("""
     WITH company_counts AS (
         SELECT registrant, COUNT(*) as p_count 
@@ -180,28 +67,27 @@ async def index_all_products_popularity(bot, chat_id):
         GROUP BY registrant
     ),
     product_scores AS (
-        SELECT p.naimenovanie, MAX(ROUND(LN(c.p_count) * 5)) as bonus
+        SELECT 
+            p.naimenovanie, 
+            MAX(ROUND(LOG(c.p_count + 1) * 3)) as portfolio_bonus,
+            CASE 
+                WHEN p.data_reg REGEXP '2024|2025|2026' THEN 2
+                WHEN p.data_reg REGEXP '2022|2023' THEN 1
+                ELSE 0
+            END as novelty_bonus
         FROM pestitsidy p
         JOIN company_counts c ON p.registrant = c.registrant
-        WHERE p.status = 'Действует' AND c.p_count > 1
+        WHERE p.status = 'Действует'
         GROUP BY p.naimenovanie
     )
     INSERT INTO product_popularity (naimenovanie, score, updated_at)
-    SELECT naimenovanie, bonus, CURRENT_TIMESTAMP
+    SELECT naimenovanie, (portfolio_bonus + novelty_bonus), CURRENT_TIMESTAMP
     FROM product_scores
-    ON CONFLICT (naimenovanie) 
-    DO UPDATE SET score = score + EXCLUDED.score, updated_at = CURRENT_TIMESTAMP;
+    ON CONFLICT (naimenovanie) DO UPDATE SET score = EXCLUDED.score, updated_at = CURRENT_TIMESTAMP;
     """)
-    
-    print("🌱 Индексируем популярность агрохимикатов по размеру портфеля компаний...", flush=True)
-    db.execute_query("""
-    CREATE TABLE IF NOT EXISTS agrokhimikaty_popularity (
-        preparat TEXT PRIMARY KEY,
-        score INTEGER DEFAULT 0,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
-    """)
-    
+
+    # 2. Индексация Агрохимикатов
+    print("🌱 Анализ портфеля и новизны агрохимикатов...", flush=True)
     db.execute_query("""
     WITH company_counts AS (
         SELECT registrant, COUNT(*) as p_count 
@@ -210,18 +96,26 @@ async def index_all_products_popularity(bot, chat_id):
         GROUP BY registrant
     ),
     product_scores AS (
-        SELECT p.preparat, MAX(ROUND(LN(c.p_count) * 5)) as bonus
+        SELECT 
+            p.preparat, 
+            MAX(ROUND(LOG(c.p_count + 1) * 3)) as portfolio_bonus,
+            CASE 
+                WHEN p.data_reg REGEXP '2024|2025|2026' THEN 2
+                WHEN p.data_reg REGEXP '2022|2023' THEN 1
+                ELSE 0
+            END as novelty_bonus
         FROM agrokhimikaty p
         JOIN company_counts c ON p.registrant = c.registrant
-        WHERE p.status = 'Действует' AND c.p_count > 1
+        WHERE p.status = 'Действует'
         GROUP BY p.preparat
     )
     INSERT INTO agrokhimikaty_popularity (preparat, score, updated_at)
-    SELECT preparat, bonus, CURRENT_TIMESTAMP
+    SELECT preparat, (portfolio_bonus + novelty_bonus), CURRENT_TIMESTAMP
     FROM product_scores
-    ON CONFLICT (preparat) 
-    DO UPDATE SET score = EXCLUDED.score, updated_at = CURRENT_TIMESTAMP;
+    ON CONFLICT (preparat) DO UPDATE SET score = EXCLUDED.score, updated_at = CURRENT_TIMESTAMP;
     """)
+
+    await bot.send_message(chat_id, "✅ Индексация завершена! Рейтинг пересчитан с учетом размера компаний (сглажено) и новизны регистраций.")
 
     await bot.send_message(chat_id, f"✅ Индексация завершена! Найдено упоминаний: {total_found_mentions}. Также добавлены бонусы по размеру портфеля компаний для пестицидов и агрохимикатов. Лог в {log_file}")
 
