@@ -24,8 +24,18 @@ from utils import (
 )
 from agent import RegistryAgent
 
+import os
+from aiogram.client.session.aiohttp import AiohttpSession
+
 # ================== БОТ И ДИСПЕТЧЕР ==================
-bot = Bot(token=TELEGRAM_TOKEN)
+# Настройка прокси (берем из переменных окружения, которые прописал standalone_launcher)
+proxy_url = os.getenv("HTTP_PROXY") or os.getenv("HTTPS_PROXY")
+session = None
+if proxy_url:
+    print(f"🌐 Telegram Bot connecting through proxy: {proxy_url}", flush=True)
+    session = AiohttpSession(proxy=proxy_url)
+
+bot = Bot(token=TELEGRAM_TOKEN, session=session)
 dp = Dispatcher()
 
 # Глобальный словарь для сессий (каждый пользователь — своя история)
