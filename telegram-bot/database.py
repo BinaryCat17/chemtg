@@ -16,6 +16,7 @@ class Database:
             
             # Добавляем поддержку REGEXP и нормальный LOWER для кириллицы
             import re
+            import math
             def regexp(expr, item):
                 if item is None: return False
                 reg = re.compile(expr, re.IGNORECASE)
@@ -24,6 +25,8 @@ class Database:
             self.conn.create_function("REGEXP", 2, regexp)
             self.conn.create_function("LOWER", 1, lambda x: str(x).lower() if x is not None else None)
             self.conn.create_function("UPPER", 1, lambda x: str(x).upper() if x is not None else None)
+            self.conn.create_function("LN", 1, lambda x: math.log(x) if x is not None and x > 0 else 0)
+            self.conn.create_function("LOG", 1, lambda x: math.log10(x) if x is not None and x > 0 else 0)
         return self.conn
 
     def execute_query(self, query: str):
