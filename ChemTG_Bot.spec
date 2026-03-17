@@ -2,21 +2,11 @@
 from PyInstaller.utils.hooks import collect_all
 import os
 
-# Функция для безопасного добавления папок
-def get_datas():
-    paths = [
-        ('telegram-bot', 'telegram-bot'),
-        ('updater', 'updater'),
-    ]
-    # Добавляем папки только если они реально существуют
-    for folder in ['data', 'bin']:
-        if os.path.exists(folder):
-            paths.append((folder, folder))
-        else:
-            print(f"⚠️ ПРЕДУПРЕЖДЕНИЕ: Папка '{folder}' не найдена, она не будет включена в сборку.")
-    return paths
-
-datas = get_datas()
+# ПУТИ ДЛЯ СБОРКИ (собираем только код и необходимые либы)
+datas = [
+    ('telegram-bot', 'telegram-bot'),
+    ('updater', 'updater'),
+]
 binaries = []
 hiddenimports = [
     'tiktoken_ext.openai_public',
@@ -30,7 +20,7 @@ hiddenimports = [
     'lxml.etree',
 ]
 
-# Автоматический сбор для библиотек
+# Автоматический сбор для тяжелых библиотек
 for pkg in ['litellm', 'aiogram', 'tavily', 'schedule', 'requests', 'urllib3']:
     tmp_ret = collect_all(pkg)
     datas += tmp_ret[0]

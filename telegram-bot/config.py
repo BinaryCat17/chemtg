@@ -23,6 +23,9 @@ except ValueError:
 # Определение базовой директории конфигурации
 if os.path.exists("/app/config"):
     CONFIG_DIR = Path("/app/config")
+elif os.environ.get('APP_EXE_DIR'):
+    # Если мы запущены через standalone_launcher, берем путь от него
+    CONFIG_DIR = Path(os.environ['APP_EXE_DIR']) / "config"
 else:
     # Ищем папку config рядом с кодом
     CONFIG_DIR = Path(__file__).parent / "config"

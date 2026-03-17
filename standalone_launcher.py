@@ -21,17 +21,25 @@ if getattr(sys, 'frozen', False):
 
 # ОПРЕДЕЛЕНИЕ ПУТЕЙ
 if getattr(sys, 'frozen', False):
+    # Если запущен EXE: bundle_dir - это Temp, а exe_dir - папка с EXE
     bundle_dir = sys._MEIPASS
     exe_dir = os.path.dirname(sys.executable)
 else:
+    # Если запущен скрипт .py
     bundle_dir = os.path.dirname(os.path.abspath(__file__))
     exe_dir = bundle_dir
 
-# АБСОЛЮТНЫЕ ПУТИ
+# АБСОЛЮТНЫЕ ПУТИ (все данные ищем СНАРУЖИ EXE в папке дистрибутива)
 DB_PATH = os.path.join(exe_dir, "data", "reestr.db")
 os.environ['SQLITE_DB_PATH'] = DB_PATH
 os.environ['CONFIG_YAML_PATH'] = os.path.join(exe_dir, "config.yaml")
 os.environ['DATA_DIR'] = os.path.join(exe_dir, "data")
+# Пробрасываем путь к конфигам для других модулей
+os.environ['APP_EXE_DIR'] = exe_dir
+
+# ГАРАНТИРУЕМ НАЛИЧИЕ ПАПОК ПРИ ЗАПУСКЕ
+for folder in [os.path.join(exe_dir, "data", "vpn"), os.path.join(exe_dir, "bin")]:
+    os.makedirs(folder, exist_ok=True)
 
 sys.path.append(os.path.join(bundle_dir, "telegram-bot"))
 sys.path.append(os.path.join(bundle_dir, "updater"))
@@ -124,7 +132,11 @@ def generate_xray_config(p):
     if not outbound_stream.get("tlsSettings"):
         del outbound_stream["tlsSettings"]
 
-    with open(os.path.join(exe_dir, "data", "vpn", "config.json"), "w") as f:
+    # Гарантируем наличие папок
+    vpn_dir = os.path.join(exe_dir, "data", "vpn")
+    os.makedirs(vpn_dir, exist_ok=True)
+
+    with open(os.path.join(vpn_dir, "config.json"), "w") as f:
         json.dump(config, f, indent=2)
     return True
 
@@ -229,7 +241,7 @@ def scheduler_worker():
         time.sleep(60)
 
 if __name__ == "__main__":
-    print("=== Standalone ChemTG Bot ===")
+    print("=== Standalone ChemTG Bot (v1.0.2 - 2026-03-17) ===")
     check_database()
     threading.Thread(target=scheduler_worker, daemon=True).start()
     
