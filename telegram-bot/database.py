@@ -40,8 +40,12 @@ class Database:
             cur = conn.cursor()
             cur.execute(query)
             
-            # Если это SELECT запрос
-            if query.strip().upper().startswith("SELECT"):
+            # Определяем, должен ли запрос возвращать данные
+            # Теперь учитываем SELECT, WITH, PRAGMA и EXPLAIN
+            q_upper = query.strip().upper()
+            is_select = any(q_upper.startswith(word) for word in ["SELECT", "WITH", "PRAGMA", "EXPLAIN"])
+
+            if is_select:
                 rows = cur.fetchall()
                 # Превращаем sqlite3.Row в обычные словари для совместимости с логикой бота
                 return [dict(row) for row in rows]

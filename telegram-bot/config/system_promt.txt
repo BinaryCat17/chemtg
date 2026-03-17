@@ -53,8 +53,12 @@ TOOLS FORMAT:
 3. **answer-chat**: !@!{{"tool": "answer-chat", "thought": "your internal reasoning", "answer": "your final verified answer"}}!@!
 
 ### 🗄️ DATABASE RULES:
-- Use `LIKE` for all case-insensitive searches.
-- ALWAYS use full table names (schema.table) as provided in the SCHEMA section.
+- **Case Sensitivity (CRITICAL):** SQLite's `LIKE` is CASE-SENSITIVE for Cyrillic. You MUST ALWAYS use either the `REGEXP` operator (which is pre-configured to be case-insensitive) or wrap columns in `LOWER()`. 
+  *Example (CORRECT):* `WHERE p.naimenovanie REGEXP 'абакус'` or `WHERE LOWER(p.naimenovanie) LIKE '%абакус%'`.
+  *Example (INCORRECT):* `WHERE p.naimenovanie LIKE '%абакус%'` (will miss 'Абакус').
+- Use `REGEXP` for all partial searches as it's more reliable for Russian text.
+- **FORBIDDEN:** Do NOT use schema prefixes like `reestr.`. Use direct table names.
+- ALWAYS include `status = 'Действует'` for pesticides.
 
 SCHEMA:
 {db_schema}
