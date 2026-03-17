@@ -203,7 +203,7 @@ async def cmd_update_info(message: types.Message):
     from database import Database
     db = Database()
     try:
-        query = "SELECT MAX(imported_at) as last_update, COUNT(*) as total FROM reestr.pestitsidy;"
+        query = "SELECT MAX(imported_at) as last_update, COUNT(*) as total FROM pestitsidy;"
         res = db.execute_query(query)
         last_date = res[0]['last_update'].strftime("%d.%m.%Y %H:%M") if res[0]['last_update'] else "Нет данных"
         total = res[0]['total']
@@ -233,7 +233,7 @@ async def cmd_top_popularity(message: types.Message):
     from database import Database
     db = Database()
     try:
-        query = "SELECT naimenovanie, score FROM reestr.product_popularity ORDER BY score DESC LIMIT 30;"
+        query = "SELECT naimenovanie, score FROM product_popularity ORDER BY score DESC LIMIT 30;"
         res = db.execute_query(query)
         if not res:
             await message.answer("ℹ️ Таблица популярности пуста. Запустите /index_popularity.")

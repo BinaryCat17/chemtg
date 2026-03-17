@@ -7,3 +7,8 @@ __pycache__
 data
 dist
 venv
+venv_linux
+xray
+geoip.dat
+geosite.dat
+reestr.db

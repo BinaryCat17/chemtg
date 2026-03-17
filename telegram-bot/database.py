@@ -13,6 +13,17 @@ class Database:
             self.conn = sqlite3.connect(self.db_path, check_same_thread=False)
             # Включаем возврат словарей (доступ по именам колонок)
             self.conn.row_factory = sqlite3.Row
+            
+            # Добавляем поддержку REGEXP и нормальный LOWER для кириллицы
+            import re
+            def regexp(expr, item):
+                if item is None: return False
+                reg = re.compile(expr, re.IGNORECASE)
+                return reg.search(str(item)) is not None
+            
+            self.conn.create_function("REGEXP", 2, regexp)
+            self.conn.create_function("LOWER", 1, lambda x: str(x).lower() if x is not None else None)
+            self.conn.create_function("UPPER", 1, lambda x: str(x).upper() if x is not None else None)
         return self.conn
 
     def execute_query(self, query: str):

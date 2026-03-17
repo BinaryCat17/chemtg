@@ -24,8 +24,8 @@ except ValueError:
 if os.path.exists("/app/config"):
     CONFIG_DIR = Path("/app/config")
 else:
-    # Если мы не в докере, ищем папку config рядом с кодом
-    CONFIG_DIR = Path(os.getcwd()) / "config"
+    # Ищем папку config рядом с кодом
+    CONFIG_DIR = Path(__file__).parent / "config"
 
 WHITELIST_FILE = CONFIG_DIR / "whitelist.json"
 USER_PROMPT_FILE = CONFIG_DIR / "user_promt.txt"

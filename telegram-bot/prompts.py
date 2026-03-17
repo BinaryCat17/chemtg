@@ -13,7 +13,7 @@ def get_system_prompt():
     
     # Пытаемся получить дату последнего импорта из базы
     try:
-        query = "SELECT MAX(imported_at) as last_update FROM reestr.pestitsidy;"
+        query = "SELECT MAX(imported_at) as last_update FROM pestitsidy;"
         res = db.execute_query(query)
         if isinstance(res, list) and res[0]['last_update']:
             last_update_date = res[0]['last_update'].strftime("%d.%m.%Y %H:%M")
