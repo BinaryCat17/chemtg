@@ -33,7 +33,6 @@ const app = createApp({
         // Helpers
         const cleanRegistrant = (text) => {
             if (!text) return '-';
-            // Убираем цифры (ИНН), запятые и лишние пробелы
             return text.replace(/[\d,]/g, '').trim();
         };
 
@@ -108,8 +107,15 @@ const app = createApp({
                     } else { dbStatus.value.lastUpdate = 'Нет данных'; }
                     vpnStatus.value = data.vpn_status;
                     isUpdating.value = data.is_updating || false;
+                } else {
+                    dbStatus.value.connected = false;
+                    vpnStatus.value = 'Ошибка сервера';
                 }
-            } catch (e) { console.error('Failed to load status', e); }
+            } catch (e) { 
+                console.error('Failed to load status', e); 
+                dbStatus.value.connected = false;
+                vpnStatus.value = 'Нет связи';
+            }
         };
 
         const updateDatabase = async () => {
@@ -157,7 +163,7 @@ const app = createApp({
 
         const fetchBrowserData = async (page = 1) => {
             browserPage.value = page;
-            const url = `/api/products/${browserType.value}?page=${page}&q=${encodeURIComponent(browserSearch.value)}&field=${browserSearchField.value}`;
+            const url = `/api/products/${browserType.value}?page=${page}&q=${encodeURIComponent(browserSearch.value)}&field=${browserSearchField.value}&active=${onlyActive.value}`;
             try {
                 const response = await fetch(url);
                 if (response.ok) { browserData.value = await response.json(); }
@@ -231,9 +237,6 @@ const app = createApp({
             if (!currentInput.value.trim() || isLoading.value) return;
             const text = currentInput.value.trim();
             currentInput.value = '';
-            if (app.config.globalProperties.$refs && app.config.globalProperties.$refs.inputField) {
-                app.config.globalProperties.$refs.inputField.style.height = 'auto';
-            }
             const session = sessions.value.find(s => s.id === activeSessionId.value);
             if (!session) return;
             if (session.messages.length === 0) { session.title = text; }
@@ -260,10 +263,10 @@ const app = createApp({
             loadSessions();
             scrollToBottom();
             checkStartup();
-            setInterval(loadStatus, 30000);
+            setInterval(loadStatus, 15000);
         });
 
-        watch(browserSearchField, () => {
+        watch([browserSearchField, onlyActive, browserType], () => {
             fetchBrowserData(1);
         });
 
@@ -272,7 +275,7 @@ const app = createApp({
         return {
             sessions, activeSessionId, activeSession, currentInput, isLoading, messagesContainer,
             viewMode, isStarting, startupLogs, browserType, browserSearch, browserSearchField, browserPage, browserData, selectedProduct,
-            dbStatus, vpnStatus, isUpdating,
+            dbStatus, vpnStatus, isUpdating, onlyActive,
             createNewSession, deleteSession, sendMessage, renderMarkdown, 
             adjustTextareaHeight, updateDatabase,
             fetchBrowserData, debouncedSearch, openProductCard, formatDV, handleChatClick,
