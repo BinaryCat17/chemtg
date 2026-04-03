@@ -146,7 +146,7 @@ const app = createApp({
             renderer.table = function(header, body) {
                 return '<div class="table-container"><table><thead>' + header + '</thead><tbody>' + body + '</tbody></table></div>';
             };
-            const html = marked.parse(text, { renderer: renderer, breaks: true, gfm: true });
+            const html = marked.parse(text, { renderer: renderer, breaks: false, gfm: true });
             return DOMPurify.sanitize(html);
         };
 
@@ -259,10 +259,28 @@ const app = createApp({
             } finally { isLoading.value = false; saveSessions(); scrollToBottom(); }
         };
 
+        const closeProductCard = () => {
+            selectedProduct.value = null;
+        };
+
+        const handleGlobalKeydown = (e) => {
+            if (e.key === 'Escape' && selectedProduct.value) {
+                closeProductCard();
+            }
+        };
+
+        const handleModalClick = (e) => {
+            // If click is directly on the <dialog> element (the backdrop), close it
+            if (e.target.tagName === 'DIALOG') {
+                closeProductCard();
+            }
+        };
+
         onMounted(() => {
             loadSessions();
             scrollToBottom();
             checkStartup();
+            window.addEventListener('keydown', handleGlobalKeydown);
             setInterval(loadStatus, 15000);
         });
 
@@ -279,7 +297,8 @@ const app = createApp({
             createNewSession, deleteSession, sendMessage, renderMarkdown, 
             adjustTextareaHeight, updateDatabase,
             fetchBrowserData, debouncedSearch, openProductCard, formatDV, handleChatClick,
-            getItemKey, cleanRegistrant, isExpired
+            getItemKey, cleanRegistrant, isExpired,
+            closeProductCard, handleModalClick
         };
     }
 });

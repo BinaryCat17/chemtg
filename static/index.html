@@ -87,6 +87,13 @@
         .message { max-width: 85%; padding: 1rem 1.25rem; border-radius: 12px; line-height: 1.5; font-size: 0.95rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
         .message.user { background-color: var(--msg-user-bg); color: var(--msg-user-text); align-self: flex-end; border-bottom-right-radius: 4px; }
         .message.assistant { background-color: var(--msg-bot-bg); color: var(--msg-bot-text); border: 1px solid var(--msg-border); align-self: flex-start; border-bottom-left-radius: 4px; width: 100%; max-width: 90%; }
+        
+        /* Стили для Markdown вывода */
+        .markdown-body p, .markdown-body ul, .markdown-body ol { margin-bottom: 0.5rem; }
+        .markdown-body p:last-child, .markdown-body ul:last-child, .markdown-body ol:last-child { margin-bottom: 0; }
+        .markdown-body li { margin-bottom: 0.25rem; }
+        .markdown-body h3 { margin-top: 1rem; margin-bottom: 0.5rem; font-size: 1.1rem; }
+        .markdown-body code { font-size: 0.85em; background: #f1f5f9; padding: 0.1rem 0.3rem; border-radius: 4px; }
 
         .table-container { overflow-x: auto; margin: 1rem 0; border-radius: 8px; border: 1px solid var(--table-border); width: 100%; background: white; }
         table { width: 100%; border-collapse: collapse; margin: 0; font-size: 0.85rem; min-width: 1100px; table-layout: fixed; }
@@ -235,9 +242,9 @@
 
         <dialog id="startup-modal" :open="isStarting"><article><header><strong>Загрузка...</strong></header><div class="startup-log-container"><div v-for="(log, i) in startupLogs" :key="i" class="startup-log-entry">{{ log }}</div></div><div class="loading-indicator" style="justify-content: center; width: 100%;"><div class="spinner"></div><span>Инициализация...</span></div></article></dialog>
 
-        <dialog :open="!!selectedProduct">
+        <dialog :open="!!selectedProduct" @click="handleModalClick">
             <article v-if="selectedProduct" class="product-modal-content">
-                <button class="close-modal-btn" @click="selectedProduct = null"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                <button class="close-modal-btn" @click="closeProductCard"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
                 <div class="product-card-title-section">
                     <h2 class="product-card-title">{{ selectedProduct.info.naimenovanie || selectedProduct.info.preparat || selectedProduct.info.Naimenovanie || selectedProduct.info.Preparat }}</h2>
                     <div class="product-card-reg">{{ selectedProduct.info.nomer_reg || selectedProduct.info.rn || selectedProduct.info.Nomer_reg || selectedProduct.info.Rn }}</div>
