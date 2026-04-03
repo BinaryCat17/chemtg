@@ -29,6 +29,9 @@ Source: ".env"; DestDir: "{app}"; Flags: ignoreversion
 ; Все файлы из папки bin
 Source: "bin\*"; DestDir: "{app}\bin"; Flags: ignoreversion recursesubdirs createallsubdirs
 
+; Все файлы из папки core/config (промпты)
+Source: "core\config\*"; DestDir: "{app}\config"; Flags: ignoreversion recursesubdirs createallsubdirs
+
 [Dirs]
 ; Создаем пустые папки, которые требует бот
 Name: "{app}\data"

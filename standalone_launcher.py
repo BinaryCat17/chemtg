@@ -12,6 +12,28 @@ import schedule
 from urllib.parse import urlparse, parse_qs, unquote
 from dotenv import load_dotenv
 
+# SINGLE INSTANCE PROTECTION AND CONSOLE ATTACHMENT
+def attach_to_console():
+    """Прикрепляет вывод к существующей консоли (если запущено из CMD)."""
+    if os.name == 'nt':
+        import ctypes
+        if ctypes.windll.kernel32.AttachConsole(-1):
+            sys.stdout = open('CONOUT$', 'w', encoding='utf-8')
+            sys.stderr = open('CONOUT$', 'w', encoding='utf-8')
+            print("\n[LOG] Attached to console. Printing logs...", flush=True)
+
+def check_single_instance():
+    """Проверяет, запущен ли уже экземпляр приложения."""
+    if os.name == 'nt':
+        import ctypes
+        mutex_name = "Global\\ChemTG_Bot_SingleInstance_Mutex"
+        kernel32 = ctypes.windll.kernel32
+        mutex = kernel32.CreateMutexW(None, False, mutex_name)
+        if kernel32.GetLastError() == 183: # ERROR_ALREADY_EXISTS
+            return False
+        check_single_instance.mutex = mutex
+    return True
+
 # ОПРЕДЕЛЕНИЕ ПУТЕЙ
 if getattr(sys, 'frozen', False):
     bundle_dir = sys._MEIPASS
@@ -41,7 +63,7 @@ load_dotenv(env_path if os.path.exists(env_path) else None, override=True)
 def log_startup(msg):
     timestamp = time.strftime("%H:%M:%S")
     api_server.startup_logs.append(f"[{timestamp}] {msg}")
-    print(f"🚀 {msg}")
+    print(f"🚀 [{timestamp}] {msg}", flush=True)
 
 def parse_vless(link):
     if not link or not link.startswith("vless://"): return None
@@ -56,7 +78,7 @@ def parse_vless(link):
             "headerType": params.get("headerType", ["none"])[0] or "none", "fp": params.get("fp", ["chrome"])[0]
         }
     except Exception as e:
-        print(f"❌ Ошибка парсинга: {e}")
+        print(f"❌ Ошибка парсинга: {e}", flush=True)
         return None
 
 def generate_xray_config(p):
@@ -86,7 +108,6 @@ def fetch_subscription():
     sub_url = os.getenv("VPN_SUBSCRIPTION_URL")
     if not sub_url: return []
     try:
-        # ВОССТАНОВЛЕНО: x-hwid и полная логика декодирования
         headers = {
             'User-Agent': 'v2rayN/6.33',
             'x-hwid': 'a1b2c3d4e5f6'
@@ -119,7 +140,6 @@ def fetch_subscription():
         
         if not links: return []
             
-        # Сортировка (как было раньше)
         nl_links, de_links, other_links = [], [], []
         for line in links:
             dec_line = unquote(line).lower()
@@ -129,12 +149,11 @@ def fetch_subscription():
                 
         return nl_links + de_links + other_links
     except Exception as e:
-        print(f"❌ Ошибка подписки: {e}")
+        print(f"❌ Ошибка подписки: {e}", flush=True)
         return []
 
 def test_proxy():
     try:
-        # Проверяем доступность Gemini API через прокси
         r = requests.get("https://generativelanguage.googleapis.com", proxies={"https": "http://127.0.0.1:20171"}, timeout=5)
         return r.status_code in [200, 404, 403]
     except: return False
@@ -142,7 +161,7 @@ def test_proxy():
 def start_vpn():
     xray_exe = os.path.join(exe_dir, "bin", "xray.exe" if os.name == 'nt' else "xray")
     if not os.path.exists(xray_exe):
-        log_startup("VPN (Xray) не найден.")
+        log_startup(f"VPN (Xray) не найден по пути: {xray_exe}")
         return False
 
     log_startup("Получение списка VPN серверов...")
@@ -187,11 +206,11 @@ def start_vpn():
 def init_system():
     log_startup("Инициализация системы...")
     if not os.path.exists(DB_PATH):
-        log_startup("База данных не найдена. Начинаю первый импорт...")
+        log_startup(f"База данных не найдена: {DB_PATH}. Начинаю импорт...")
         import_reestr.run_import()
         log_startup("Первичный импорт завершен.")
     else:
-        log_startup("База данных обнаружена.")
+        log_startup(f"База данных обнаружена: {DB_PATH}")
     
     vpn_ok = start_vpn()
     if vpn_ok:
@@ -209,20 +228,30 @@ def scheduler_worker():
         time.sleep(60)
 
 if __name__ == "__main__":
-    # 1. Запускаем сервер в отдельном потоке (МГНОВЕННО)
+    # 0. Попытка прикрепиться к консоли (если запущено из CMD)
+    attach_to_console()
+
+    # 1. Проверка на единственный экземпляр
+    if not check_single_instance():
+        print("🚀 Приложение уже запущено. Открываю браузер...", flush=True)
+        import webbrowser
+        webbrowser.open("http://127.0.0.1:8000")
+        sys.exit(0)
+
+    # 2. Запуск сервера
     threading.Thread(target=api_server.main, daemon=True).start()
     
-    # 2. Открываем браузер
+    # 3. Открытие браузера
     def open_browser():
-        time.sleep(1)
+        time.sleep(2)
         import webbrowser
         webbrowser.open("http://127.0.0.1:8000")
     threading.Thread(target=open_browser, daemon=True).start()
     
-    # 3. Планировщик
+    # 4. Планировщик
     threading.Thread(target=scheduler_worker, daemon=True).start()
     
-    # 4. Инициализация в основном потоке
+    # 5. Инициализация системы
     try:
         init_system()
         while True:

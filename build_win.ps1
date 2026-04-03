@@ -66,6 +66,24 @@ if ($LASTEXITCODE -ne 0) {
 Write-Host "   EXE successfully built." -ForegroundColor Green
 
 Write-Host ""
+Write-Host "4.1 Copying resources to dist folder..." -ForegroundColor Yellow
+# Ensure dist/bin and dist/data exist
+if (-not (Test-Path "dist\bin")) { New-Item -ItemType Directory -Path "dist\bin" | Out-Null }
+if (-not (Test-Path "dist\data")) { New-Item -ItemType Directory -Path "dist\data" | Out-Null }
+
+# Copy bin and data to dist (only if they exist in build root)
+if (Test-Path "bin") { Copy-Item -Path "bin\*" -Destination "dist\bin" -Recurse -Force }
+if (Test-Path "data") { Copy-Item -Path "data\*" -Destination "dist\data" -Recurse -Force }
+if (Test-Path "core\config") { 
+    if (-not (Test-Path "dist\config")) { New-Item -ItemType Directory -Path "dist\config" -Force | Out-Null }
+    Copy-Item -Path "core\config\*" -Destination "dist\config" -Recurse -Force 
+}
+if (Test-Path "config.yaml") { Copy-Item -Path "config.yaml" -Destination "dist\config.yaml" -Force }
+if (Test-Path ".env") { Copy-Item -Path ".env" -Destination "dist\.env" -Force }
+
+Write-Host "   Resources copied to dist folder. You can now run the EXE directly from there." -ForegroundColor Green
+
+Write-Host ""
 Write-Host "5. Creating Installer (Inno Setup)..." -ForegroundColor Yellow
 
 $ISCC = ""

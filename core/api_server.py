@@ -24,11 +24,15 @@ skip_vpn_check = False
 
 # Mount static folder
 if getattr(sys, 'frozen', False):
-    bundle_dir = sys._MEIPASS
+    # В EXE папка static лежит прямо в корне временной папки _MEIPASS
+    static_dir = os.path.join(sys._MEIPASS, "static")
 else:
-    bundle_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    # При разработке - на уровень выше папки core
+    static_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static")
 
-static_dir = os.path.join(bundle_dir, "static")
+if not os.path.exists(static_dir):
+    # Если не нашли, попробуем вариант рядом с файлом (на всякий случай)
+    static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
