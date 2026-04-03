@@ -117,7 +117,7 @@
         
         .clickable-product { color: #0ea5e9; text-decoration: underline; cursor: pointer; font-weight: 600; }
 
-        .product-modal-content { max-width: 900px; width: 100%; position: relative; padding: 1.25rem 1.75rem !important; }
+        .product-modal-content { max-width: 900px; width: 100%; position: relative; padding: 1.5rem 2rem !important; overflow-y: auto; max-height: 90vh; }
         .close-modal-btn { position: absolute; top: 1.25rem; right: 1.25rem; background: #f1f5f9; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #475569; transition: all 0.2s; z-index: 10; padding: 0; }
         .close-modal-btn:hover { background: #e2e8f0; color: #0f172a; transform: rotate(90deg); }
 
@@ -131,11 +131,11 @@
         .grid-label { font-size: 0.6rem; color: #94a3b8; text-transform: uppercase; font-weight: 800; margin-bottom: 0.05rem; }
         .grid-value { font-weight: 600; font-size: 0.85rem; color: #334155; }
 
-        .apps-list { display: flex; flex-direction: column; gap: 0.6rem; max-height: 55vh; overflow-y: auto; padding-right: 0.5rem; }
-        .app-item { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
-        .app-kultura { background: #f1f5f9; padding: 0.4rem 0.85rem; font-weight: 700; color: #0f172a; border-bottom: 1px solid #e2e8f0; font-size: 0.9rem; }
-        .app-details { padding: 0.6rem 0.85rem; display: flex; flex-direction: column; gap: 0.5rem; }
-        .app-detail-row { display: flex; flex-direction: column; gap: 0.05rem; border-bottom: 1px solid #f8fafc; padding-bottom: 0.3rem; }
+        .apps-list { display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 1rem; }
+        .app-item { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.03); flex-shrink: 0; }
+        .app-kultura { background: #f1f5f9; padding: 0.6rem 1rem; font-weight: 700; color: #0f172a; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem; }
+        .app-details { padding: 0.75rem 1rem; display: flex; flex-direction: column; gap: 0.6rem; }
+        .app-detail-row { display: flex; flex-direction: column; gap: 0.15rem; border-bottom: 1px solid #f8fafc; padding-bottom: 0.4rem; }
         .app-detail-row:last-child { border-bottom: none; }
         .app-detail-label { font-size: 0.65rem; color: #64748b; font-weight: 700; text-transform: uppercase; }
         .app-detail-value { font-size: 0.85rem; color: #1e293b; line-height: 1.3; }
