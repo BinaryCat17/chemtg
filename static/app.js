@@ -11,8 +11,15 @@ const app = createApp({
         // UI State
         const viewMode = ref('chat'); // 'chat' or 'browser'
         const isStarting = ref(true);
+        const showSkipVpn = ref(false);
         const startupLogs = ref([]);
         const startupLogContainer = ref(null);
+
+        const skipVpn = async () => {
+            try {
+                await fetch('/api/skip-vpn', { method: 'POST' });
+            } catch (e) { console.error(e); }
+        };
 
         // Watch startupLogs to auto-scroll to bottom
         watch(startupLogs, async () => {
@@ -291,6 +298,7 @@ const app = createApp({
             checkStartup();
             window.addEventListener('keydown', handleGlobalKeydown);
             setInterval(loadStatus, 15000);
+            setTimeout(() => { showSkipVpn.value = true; }, 5000);
         });
 
         watch([browserSearchField, onlyActive, browserType], () => {
@@ -301,7 +309,7 @@ const app = createApp({
 
         return {
             sessions, activeSessionId, activeSession, currentInput, isLoading, messagesContainer,
-            viewMode, isStarting, startupLogs, startupLogContainer, browserType, browserSearch, browserSearchField, browserPage, browserData, selectedProduct,
+            viewMode, isStarting, showSkipVpn, skipVpn, startupLogs, startupLogContainer, browserType, browserSearch, browserSearchField, browserPage, browserData, selectedProduct,
             dbStatus, vpnStatus, isUpdating, onlyActive,
             createNewSession, deleteSession, sendMessage, renderMarkdown, 
             adjustTextareaHeight, updateDatabase,

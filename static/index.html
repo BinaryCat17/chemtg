@@ -247,7 +247,7 @@
             </div>
         </div>
 
-        <dialog id="startup-modal" :open="isStarting"><article><header><strong>Загрузка...</strong></header><div class="startup-log-container" ref="startupLogContainer"><div v-for="(log, i) in startupLogs" :key="i" class="startup-log-entry">{{ log }}</div></div><div style="padding-top: 1rem; display: flex; justify-content: center;"><div class="loading-indicator"><div class="spinner"></div><span>Инициализация...</span></div></div></article></dialog>
+        <dialog id="startup-modal" :open="isStarting"><article><header><strong>Загрузка...</strong></header><div class="startup-log-container" ref="startupLogContainer"><div v-for="(log, i) in startupLogs" :key="i" class="startup-log-entry">{{ log }}</div></div><div style="padding-top: 1rem; display: flex; flex-direction: column; align-items: center; gap: 1rem;"><div class="loading-indicator"><div class="spinner"></div><span>Инициализация...</span></div><button v-if="showSkipVpn" @click="skipVpn" class="secondary outline" style="margin:0; font-size: 0.8rem; padding: 0.4rem 1rem; width: auto;">Продолжить без VPN</button></div></article></dialog>
 
         <dialog :open="!!selectedProduct" @click="handleModalClick">
             <article v-if="selectedProduct" class="product-modal-content">

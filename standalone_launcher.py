@@ -152,6 +152,10 @@ def start_vpn():
         return False
         
     for link in links:
+        if api_server.skip_vpn_check:
+            log_startup("⏩ Проверка VPN прервана пользователем.")
+            return False
+            
         p = parse_vless(link)
         if not p or not p.get("address") or p["address"] == "0.0.0.0": continue
         

@@ -20,6 +20,7 @@ app = FastAPI()
 update_process = None
 startup_logs = []
 is_system_ready = False
+skip_vpn_check = False
 
 # Mount static folder
 bundle_dir = os.environ.get("APP_EXE_DIR", os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -36,6 +37,12 @@ async def root():
 @app.get("/api/startup-status")
 async def get_startup_status():
     return {"logs": startup_logs, "ready": is_system_ready}
+
+@app.post("/api/skip-vpn")
+async def skip_vpn():
+    global skip_vpn_check
+    skip_vpn_check = True
+    return {"status": "skipped"}
 
 @app.get("/api/status")
 async def get_status():
