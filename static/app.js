@@ -32,7 +32,7 @@ const app = createApp({
         // Helpers
         const cleanRegistrant = (text) => {
             if (!text) return '-';
-            // Убираем цифры (ИНН), запятые и лишние пробелы в начале/конце
+            // Убираем цифры (ИНН), запятые и лишние пробелы
             return text.replace(/[\d,]/g, '').trim();
         };
 
@@ -173,7 +173,7 @@ const app = createApp({
             const id = item.nomer_reg || item.Nomer_reg || item.rn || item.Rn;
             if (!id) return;
             try {
-                const response = await fetch(`/api/product/${type}/${id}`);
+                const response = await fetch(`/api/product/${type}/${encodeURIComponent(id)}`);
                 if (response.ok) {
                     const data = await response.json();
                     selectedProduct.value = { type, ...data };
@@ -197,16 +197,22 @@ const app = createApp({
             try {
                 const r1 = await fetch(`/api/products/pesticides?limit=1&q=${encodeURIComponent(name)}&field=name`);
                 const d1 = await r1.json();
-                if (d1.items.length > 0) { openProductCardSpecific('pesticide', d1.items[0].nomer_reg || d1.items[0].Nomer_reg); return; }
+                if (d1.items.length > 0) { 
+                    const id = d1.items[0].nomer_reg || d1.items[0].Nomer_reg;
+                    openProductCardSpecific('pesticide', id); return; 
+                }
                 const r2 = await fetch(`/api/products/agrochemicals?limit=1&q=${encodeURIComponent(name)}&field=name`);
                 const d2 = await r2.json();
-                if (d2.items.length > 0) { openProductCardSpecific('agrochemical', d2.items[0].rn || d2.items[0].Rn); return; }
+                if (d2.items.length > 0) { 
+                    const id = d2.items[0].rn || d2.items[0].Rn;
+                    openProductCardSpecific('agrochemical', id); return; 
+                }
             } catch (e) { console.error(e); }
         };
 
         const openProductCardSpecific = async (type, id) => {
             try {
-                const response = await fetch(`/api/product/${type}/${id}`);
+                const response = await fetch(`/api/product/${type}/${encodeURIComponent(id)}`);
                 if (response.ok) {
                     const data = await response.json();
                     selectedProduct.value = { type, ...data };
@@ -254,6 +260,10 @@ const app = createApp({
             scrollToBottom();
             checkStartup();
             setInterval(loadStatus, 30000);
+        });
+
+        watch(browserSearchField, () => {
+            fetchBrowserData(1);
         });
 
         watch(activeSessionId, () => { scrollToBottom(); });

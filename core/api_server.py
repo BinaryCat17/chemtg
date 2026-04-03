@@ -141,7 +141,7 @@ async def get_agrochemicals(page: int = 1, limit: int = 50, q: str = "", field: 
     total_res = db.execute_query(count_query)
     return {"items": items, "total": total_res[0]['total'] if total_res else 0}
 
-@app.get("/api/product/pesticide/{id}")
+@app.get("/api/product/pesticide/{id:path}")
 async def get_pesticide_detail(id: str):
     db = Database()
     p_res = db.execute_query(f"SELECT * FROM pestitsidy WHERE nomer_reg = '{id}'")
@@ -149,7 +149,7 @@ async def get_pesticide_detail(id: str):
     apps = db.execute_query(f"SELECT * FROM pestitsidy_primeneniya WHERE nomer_reg = '{id}'")
     return {"info": p_res[0], "applications": apps}
 
-@app.get("/api/product/agrochemical/{id}")
+@app.get("/api/product/agrochemical/{id:path}")
 async def get_agrochemical_detail(id: str):
     db = Database()
     a_res = db.execute_query(f"SELECT * FROM agrokhimikaty WHERE rn = '{id}'")
