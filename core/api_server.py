@@ -11,6 +11,7 @@ import socket
 import subprocess
 
 from agent import RegistryAgent
+from database import Database
 import config
 
 app = FastAPI()
@@ -84,6 +85,78 @@ async def update_db():
     
     update_process = subprocess.Popen([sys.executable, updater_script, "--once"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     return {"status": "started"}
+
+@app.get("/api/products/pesticides")
+async def get_pesticides(page: int = 1, limit: int = 50, q: str = ""):
+    db = Database()
+    offset = (page - 1) * limit
+    where = f"WHERE (naimenovanie REGEXP '{q}' OR deystvuyushchee_veshchestvo REGEXP '{q}')" if q else "WHERE 1=1"
+    
+    query = f"""
+        SELECT p.*, COALESCE(pop.score, 0) as popularity 
+        FROM pestitsidy p 
+        LEFT JOIN product_popularity pop ON p.naimenovanie = pop.naimenovanie 
+        {where} 
+        ORDER BY popularity DESC, naimenovanie ASC 
+        LIMIT {limit} OFFSET {offset}
+    """
+    count_query = f"SELECT COUNT(*) as total FROM pestitsidy {where}"
+    
+    items = db.execute_query(query)
+    total_res = db.execute_query(count_query)
+    total = total_res[0]['total'] if total_res else 0
+    
+    return {"items": items, "total": total}
+
+@app.get("/api/products/agrochemicals")
+async def get_agrochemicals(page: int = 1, limit: int = 50, q: str = ""):
+    db = Database()
+    offset = (page - 1) * limit
+    where = f"WHERE (preparat REGEXP '{q}')" if q else "WHERE 1=1"
+    
+    query = f"""
+        SELECT a.*, COALESCE(pop.score, 0) as popularity 
+        FROM agrokhimikaty a 
+        LEFT JOIN agrokhimikaty_popularity pop ON a.preparat = pop.preparat 
+        {where} 
+        ORDER BY popularity DESC, preparat ASC 
+        LIMIT {limit} OFFSET {offset}
+    """
+    count_query = f"SELECT COUNT(*) as total FROM agrokhimikaty {where}"
+    
+    items = db.execute_query(query)
+    total_res = db.execute_query(count_query)
+    total = total_res[0]['total'] if total_res else 0
+    
+    return {"items": items, "total": total}
+
+@app.get("/api/product/pesticide/{id}")
+async def get_pesticide_detail(id: str):
+    db = Database()
+    # Basic info
+    p_query = f"SELECT * FROM pestitsidy WHERE nomer_reg = '{id}'"
+    p_res = db.execute_query(p_query)
+    if not p_res: return {"error": "Not found"}
+    
+    # Applications
+    app_query = f"SELECT * FROM pestitsidy_primeneniya WHERE nomer_reg = '{id}'"
+    apps = db.execute_query(app_query)
+    
+    return {"info": p_res[0], "applications": apps}
+
+@app.get("/api/product/agrochemical/{id}")
+async def get_agrochemical_detail(id: str):
+    db = Database()
+    # Basic info
+    a_query = f"SELECT * FROM agrokhimikaty WHERE rn = '{id}'"
+    a_res = db.execute_query(a_query)
+    if not a_res: return {"error": "Not found"}
+    
+    # Applications
+    app_query = f"SELECT * FROM agrokhimikaty_primeneniya WHERE rn = '{id}'"
+    apps = db.execute_query(app_query)
+    
+    return {"info": a_res[0], "applications": apps}
 
 class ChatRequest(BaseModel):
     message: str

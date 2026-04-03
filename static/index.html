@@ -63,18 +63,33 @@
             color: #0f172a;
         }
 
-        .sidebar-header button {
+        .sidebar-nav {
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            border-bottom: 1px solid var(--sidebar-border);
+        }
+
+        .sidebar-nav button {
             margin: 0;
             padding: 0.6rem;
             border-radius: 8px;
             font-weight: 600;
             background-color: #ffffff;
-            color: #0ea5e9;
-            border: 1px solid #0ea5e9;
+            color: #475569;
+            border: 1px solid #cbd5e1;
             transition: all 0.2s;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
-        .sidebar-header button:hover {
-            background-color: #f0f9ff;
+        .sidebar-nav button:hover { background-color: #f8fafc; }
+        .sidebar-nav button.active {
+            background-color: #0ea5e9;
+            color: #ffffff;
+            border-color: #0ea5e9;
         }
 
         .sessions-list {
@@ -339,6 +354,77 @@
             margin-top: 2px;
         }
 
+        /* Браузер базы */
+        #browser-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 2rem;
+            overflow-y: auto;
+            background-color: #f8fafc;
+        }
+        .browser-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            align-items: center;
+        }
+        .browser-controls input {
+            margin: 0;
+            flex: 1;
+        }
+        .browser-controls select {
+            margin: 0;
+            width: 200px;
+        }
+        .pagination {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            justify-content: center;
+            align-items: center;
+        }
+        .pagination button { margin: 0; padding: 0.4rem 0.8rem; }
+        
+        .clickable-product {
+            color: #0ea5e9;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+        .clickable-product:hover { color: #0284c7; }
+
+        /* Карточка продукта */
+        .product-modal-content {
+            max-width: 900px;
+            width: 100%;
+        }
+        .product-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+        }
+        .product-card-title { margin: 0; }
+        .product-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .grid-item {
+            background: #f1f5f9;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+        }
+        .grid-label {
+            font-size: 0.75rem;
+            color: #64748b;
+            text-transform: uppercase;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+        .grid-value { font-weight: 600; }
+
         .loading-indicator { 
             display: inline-flex;
             align-items: center;
@@ -377,34 +463,52 @@
         <div id="sidebar">
             <div class="sidebar-header">
                 <h2>🧪 ChemTG AI</h2>
-                <button @click="createNewSession">+ Новый диалог</button>
             </div>
-            <div class="sessions-list">
+            
+            <div class="sidebar-nav">
+                <button @click="viewMode = 'chat'" :class="{ active: viewMode === 'chat' }">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    Чат с AI
+                </button>
+                <button @click="viewMode = 'browser'" :class="{ active: viewMode === 'browser' }">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    Просмотр базы
+                </button>
+            </div>
+
+            <div v-if="viewMode === 'chat'" class="sidebar-nav" style="border-bottom:none; padding-bottom: 0;">
+                <button @click="createNewSession" style="background:#0ea5e9; color:white; border:none; justify-content:center;">
+                    + Новый диалог
+                </button>
+            </div>
+
+            <div v-if="viewMode === 'chat'" class="sessions-list">
                 <div v-for="s in sessions" :key="s.id" 
                      @click="activeSessionId = s.id"
                      class="session-item" :class="{ active: s.id === activeSessionId }"
                      :title="s.title">
                     <span class="session-title">{{ s.title }}</span>
                     <button class="delete-btn" @click.stop="deleteSession(s.id)" title="Удалить">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
                     </button>
                 </div>
             </div>
         </div>
         
-        <div id="chat-container">
+        <!-- КОНТЕЙНЕР ЧАТА -->
+        <div v-if="viewMode === 'chat'" id="chat-container">
             <div class="chat-header">
                 <div class="status-indicators">
                     <span class="status-item" :class="{ 'ok': dbStatus.connected, 'error': !dbStatus.connected }">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
                         БД: {{ dbStatus.connected ? 'Подключена' : 'Ошибка' }}
                     </span>
                     <span class="status-item">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                         Обновлено: {{ dbStatus.lastUpdate }}
                     </span>
                     <span class="status-item" :class="{ 'ok': vpnStatus === 'Подключен', 'error': vpnStatus !== 'Подключен' }">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                         VPN: {{ vpnStatus }}
                     </span>
                 </div>
@@ -422,7 +526,7 @@
                 <div v-for="(msg, index) in activeSession.messages" :key="index" 
                      class="message" :class="msg.role">
                     <div v-if="msg.role === 'user'">{{ msg.content }}</div>
-                    <div v-else class="markdown-body" v-html="renderMarkdown(msg.content)"></div>
+                    <div v-else class="markdown-body" v-html="renderMarkdown(msg.content)" @click="handleChatClick"></div>
                 </div>
                 
                 <div v-if="isLoading" class="message assistant">
@@ -437,27 +541,152 @@
                 <div class="input-wrapper">
                     <textarea v-model="currentInput" 
                               @keydown.enter.exact.prevent="sendMessage" 
-                              placeholder="Спросите о препарате, например: «Аналоги Абакуса?»..." 
+                              placeholder="Спросите о препарате..." 
                               :disabled="isLoading"
                               ref="inputField"
                               @input="adjustTextareaHeight"></textarea>
                 </div>
                 <button class="send-icon-btn" @click="sendMessage" :disabled="isLoading || isUpdating || !currentInput.trim()" title="Отправить">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                 </button>
             </div>
         </div>
 
-        <!-- Модальное окно обновления -->
+        <!-- КОНТЕЙНЕР БРАУЗЕРА -->
+        <div v-if="viewMode === 'browser'" id="browser-container">
+            <h1>Просмотр реестра</h1>
+            
+            <div class="browser-controls">
+                <select v-model="browserType" @change="fetchBrowserData(1)">
+                    <option value="pesticides">Пестициды</option>
+                    <option value="agrochemicals">Агрохимикаты</option>
+                </select>
+                <input type="text" v-model="browserSearch" @input="debouncedSearch" placeholder="Поиск по названию или ДВ...">
+            </div>
+
+            <div class="table-container" style="flex:1; margin:0; background: white;">
+                <table>
+                    <thead>
+                        <tr v-if="browserType === 'pesticides'">
+                            <th>Название</th>
+                            <th>Действующее вещество</th>
+                            <th>Регистратор</th>
+                            <th>Срок рег.</th>
+                        </tr>
+                        <tr v-else>
+                            <th>Препарат</th>
+                            <th>Регистратор</th>
+                            <th>Группа</th>
+                            <th>Срок рег.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="item in browserData.items" :key="item.nomer_reg || item.rn" @click="openProductCard(item)">
+                            <template v-if="browserType === 'pesticides'">
+                                <td class="clickable-product">{{ item.naimenovanie }}</td>
+                                <td>{{ formatDV(item.deystvuyushchee_veshchestvo) }}</td>
+                                <td>{{ item.registrant }}</td>
+                                <td>{{ item.srok_reg }}</td>
+                            </template>
+                            <template v-else>
+                                <td class="clickable-product">{{ item.preparat }}</td>
+                                <td>{{ item.registrant }}</td>
+                                <td>{{ item.group_name }}</td>
+                                <td>{{ item.srok_reg }}</td>
+                            </template>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="pagination">
+                <button :disabled="browserPage === 1" @click="fetchBrowserData(browserPage - 1)">← Пред.</button>
+                <span>Страница {{ browserPage }} из {{ Math.ceil(browserData.total / 50) || 1 }}</span>
+                <button :disabled="browserPage >= Math.ceil(browserData.total / 50)" @click="fetchBrowserData(browserPage + 1)">След. →</button>
+            </div>
+        </div>
+
+        <!-- МОДАЛКА КАРТОЧКИ ТОВАРА -->
+        <dialog :open="!!selectedProduct">
+            <article v-if="selectedProduct" class="product-modal-content">
+                <header>
+                    <div class="product-card-header">
+                        <div>
+                            <h2 class="product-card-title">{{ selectedProduct.info.naimenovanie || selectedProduct.info.preparat }}</h2>
+                            <small>{{ selectedProduct.info.nomer_reg || selectedProduct.info.rn }}</small>
+                        </div>
+                        <button class="outline" @click="selectedProduct = null">Закрыть</button>
+                    </div>
+                </header>
+
+                <div class="product-grid">
+                    <div class="grid-item">
+                        <div class="grid-label">Регистратор</div>
+                        <div class="grid-value">{{ selectedProduct.info.registrant }}</div>
+                    </div>
+                    <div class="grid-item">
+                        <div class="grid-label">Срок регистрации</div>
+                        <div class="grid-value">{{ selectedProduct.info.srok_reg }} ({{ selectedProduct.info.status }})</div>
+                    </div>
+                    <div v-if="selectedProduct.info.deystvuyushchee_veshchestvo" class="grid-item" style="grid-column: span 2;">
+                        <div class="grid-label">Состав</div>
+                        <div class="grid-value">{{ formatDV(selectedProduct.info.deystvuyushchee_veshchestvo) }}</div>
+                    </div>
+                    <div v-if="selectedProduct.info.preparativnaya_forma" class="grid-item">
+                        <div class="grid-label">Препаративная форма</div>
+                        <div class="grid-value">{{ selectedProduct.info.preparativnaya_forma }}</div>
+                    </div>
+                    <div v-if="selectedProduct.info.klass_opasnosti" class="grid-item">
+                        <div class="grid-label">Класс опасности</div>
+                        <div class="grid-value">{{ selectedProduct.info.klass_opasnosti }}</div>
+                    </div>
+                </div>
+
+                <h3>Регламенты применения</h3>
+                <div class="table-container" style="max-height: 400px; overflow-y: auto;">
+                    <table>
+                        <thead>
+                            <tr v-if="selectedProduct.type === 'pesticide'">
+                                <th>Культура</th>
+                                <th>Вредный объект</th>
+                                <th>Норма</th>
+                                <th>Особенности</th>
+                            </tr>
+                            <tr v-else>
+                                <th>Марка</th>
+                                <th>Культура</th>
+                                <th>Доза</th>
+                                <th>Особенности</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(app, idx) in selectedProduct.applications" :key="idx">
+                                <template v-if="selectedProduct.type === 'pesticide'">
+                                    <td>{{ app.kultura }}</td>
+                                    <td>{{ app.vrednyy_obekt }}</td>
+                                    <td>{{ app.norma }}</td>
+                                    <td>{{ app.osobennosti }}</td>
+                                </template>
+                                <template v-else>
+                                    <td>{{ app.marka }}</td>
+                                    <td>{{ app.kultura }}</td>
+                                    <td>{{ app.doza }}</td>
+                                    <td>{{ app.osobennosti }}</td>
+                                </template>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+        </dialog>
+
+        <!-- Модальное окно обновления БД -->
         <dialog :open="isUpdating">
             <article>
-                <header>
-                    <strong>Обновление базы данных</strong>
-                </header>
-                <p>Пожалуйста, подождите. Идет фоновая загрузка и обработка реестра Минсельхоза. Это может занять несколько минут.</p>
+                <header><strong>Обновление базы данных</strong></header>
+                <p>Пожалуйста, подождите. Идет фоновая загрузка и обработка реестра Минсельхоза.</p>
                 <div class="loading-indicator" style="justify-content: center; width: 100%; margin-top: 1rem;">
-                    <div class="spinner"></div>
-                    <span>Импорт данных...</span>
+                    <div class="spinner"></div><span>Импорт данных...</span>
                 </div>
             </article>
         </dialog>
