@@ -212,12 +212,13 @@ def test_proxy():
     print("⏳ Проверка VPN соединения (Gemini API)...")
     proxies = {"http": "http://127.0.0.1:20171", "https": "http://127.0.0.1:20171"}
     try:
-        r = requests.get("https://generativelanguage.googleapis.com", proxies=proxies, timeout=15)
+        # Уменьшаем таймаут до 5 секунд, чтобы быстро пропускать нерабочие серверы
+        r = requests.get("https://generativelanguage.googleapis.com", proxies=proxies, timeout=5)
         if r.status_code in [200, 404, 403]:
             print("✅ VPN работает!")
             return True
     except Exception as e:
-        print(f"❌ VPN не пропускает трафик: {e}")
+        pass
     return False
 
 def start_vpn():
