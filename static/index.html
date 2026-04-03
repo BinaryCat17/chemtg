@@ -39,7 +39,7 @@
         }
         
         #sidebar {
-            width: 280px;
+            width: 300px; /* Немного шире для длинных названий */
             background-color: var(--sidebar-bg);
             border-right: 1px solid var(--sidebar-border);
             display: flex;
@@ -83,38 +83,45 @@
             flex-grow: 1;
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
+            gap: 0.25rem;
         }
 
         .session-item {
-            padding: 0.75rem 1rem;
+            padding: 0.6rem 0.6rem 0.6rem 0.8rem;
             cursor: pointer;
             border-radius: 8px;
-            font-size: 0.95rem;
+            font-size: 0.85rem;
             color: #475569;
             transition: background 0.2s;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 0.5rem;
+            min-height: 40px;
         }
         .session-title {
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            flex-grow: 1;
+            flex: 1;
+            min-width: 0;
+            line-height: 1.2;
         }
         .delete-btn {
             background: none;
             border: none;
             color: #94a3b8;
             cursor: pointer;
-            padding: 4px;
+            padding: 0;
             border-radius: 4px;
             opacity: 0;
             transition: opacity 0.2s, background-color 0.2s, color 0.2s;
             display: flex;
             align-items: center;
             justify-content: center;
+            width: 28px;
+            height: 28px;
+            flex-shrink: 0;
         }
         .session-item:hover .delete-btn { opacity: 1; }
         .delete-btn:hover { background-color: #fee2e2; color: #ef4444; }
@@ -135,32 +142,37 @@
         }
         
         .chat-header {
-            padding: 1rem 2rem;
+            padding: 0.75rem 2rem;
             border-bottom: 1px solid var(--sidebar-border);
             background-color: #ffffff;
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-start;
             align-items: center;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
             z-index: 5;
+            gap: 2rem;
+            min-height: 60px;
         }
         .status-indicators {
             display: flex;
             gap: 1.5rem;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: #64748b;
+            align-items: center;
         }
         .status-item {
             display: flex;
             align-items: center;
             gap: 0.4rem;
+            white-space: nowrap;
         }
         .status-item.ok { color: #10b981; }
         .status-item.error { color: #ef4444; }
+        
         .update-btn {
-            padding: 0.5rem 1rem;
+            padding: 0.4rem 0.8rem;
             border-radius: 6px;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 600;
             background-color: #f1f5f9;
             color: #475569;
@@ -168,6 +180,9 @@
             cursor: pointer;
             transition: all 0.2s;
             margin: 0;
+            width: auto !important;
+            margin-left: auto;
+            white-space: nowrap;
         }
         .update-btn:hover:not(:disabled) {
             background-color: #e2e8f0;
@@ -261,8 +276,8 @@
             border-top: 1px solid var(--sidebar-border);
             background: var(--chat-bg);
             display: flex;
-            gap: 1rem;
-            align-items: flex-end;
+            gap: 1.5rem;
+            align-items: center; /* Центрируем кнопку и текстовое поле */
         }
 
         .input-wrapper {
@@ -281,10 +296,11 @@
             font-size: 1.05rem;
             line-height: 1.5;
             margin-bottom: 0;
-            min-height: 80px;
+            min-height: 60px; /* Уменьшил немного для лучшего центрирования */
             max-height: 250px;
             box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
             transition: border-color 0.2s, box-shadow 0.2s;
+            display: block;
         }
         textarea:focus {
             border-color: #0ea5e9;
@@ -305,7 +321,7 @@
             cursor: pointer;
             transition: background-color 0.2s, transform 0.1s;
             flex-shrink: 0;
-            margin-bottom: 5px; /* align roughly with textarea bottom */
+            margin-bottom: 0; /* Убрал костыльный марджин */
         }
         button.send-icon-btn:hover:not(:disabled) {
             background-color: #0284c7;
