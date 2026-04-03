@@ -8,6 +8,11 @@ const app = createApp({
         const isLoading = ref(false);
         const messagesContainer = ref(null);
 
+        // Status variables
+        const dbStatus = ref({ connected: false, lastUpdate: '' });
+        const vpnStatus = ref('Неизвестно');
+        const isUpdating = ref(false);
+
         // Load from local storage
         const loadSessions = () => {
             const saved = localStorage.getItem('chemtg_sessions');
@@ -34,6 +39,64 @@ const app = createApp({
             });
             activeSessionId.value = newId;
             saveSessions();
+        };
+
+        const deleteSession = (id) => {
+            if (confirm('Удалить этот диалог?')) {
+                sessions.value = sessions.value.filter(s => s.id !== id);
+                saveSessions();
+                if (activeSessionId.value === id) {
+                    if (sessions.value.length > 0) {
+                        activeSessionId.value = sessions.value[0].id;
+                    } else {
+                        createNewSession();
+                    }
+                }
+            }
+        };
+
+        const loadStatus = async () => {
+            try {
+                const response = await fetch('/api/status');
+                if (response.ok) {
+                    const data = await response.json();
+                    dbStatus.value.connected = data.db_connected;
+                    
+                    if (data.db_last_update) {
+                        const d = new Date(data.db_last_update + 'Z');
+                        dbStatus.value.lastUpdate = d.toLocaleString('ru-RU', {
+                            day: '2-digit', month: '2-digit', year: 'numeric', 
+                            hour: '2-digit', minute: '2-digit'
+                        });
+                    } else {
+                        dbStatus.value.lastUpdate = 'Нет данных';
+                    }
+                    vpnStatus.value = data.vpn_status;
+                    isUpdating.value = data.is_updating || false;
+                }
+            } catch (e) {
+                console.error('Failed to load status', e);
+            }
+        };
+
+        const updateDatabase = async () => {
+            if (isUpdating.value) return;
+            if (!confirm('Запустить процесс обновления базы данных Минсельхоза? Это может занять несколько минут.')) return;
+            
+            isUpdating.value = true;
+            try {
+                const response = await fetch('/api/update_db', { method: 'POST' });
+                if (!response.ok) {
+                    alert('Ошибка при запуске обновления.');
+                    isUpdating.value = false;
+                } else {
+                    // Refresh status immediately to ensure UI is in sync with the backend state
+                    loadStatus();
+                }
+            } catch (e) {
+                alert('Ошибка соединения с сервером.');
+                isUpdating.value = false;
+            }
         };
 
         const activeSession = computed(() => {
@@ -131,6 +194,8 @@ const app = createApp({
         onMounted(() => {
             loadSessions();
             scrollToBottom();
+            loadStatus();
+            setInterval(loadStatus, 30000);
         });
 
         watch(activeSessionId, () => {
@@ -145,8 +210,13 @@ const app = createApp({
             isLoading,
             messagesContainer,
             createNewSession,
+            deleteSession,
             sendMessage,
-            renderMarkdown
+            renderMarkdown,
+            dbStatus,
+            vpnStatus,
+            isUpdating,
+            updateDatabase
         };
     }
 });
