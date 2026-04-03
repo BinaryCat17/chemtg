@@ -292,16 +292,7 @@ if __name__ == "__main__":
         import webbrowser
         try:
             print("🌐 Открываю браузер: http://127.0.0.1:8000")
-            # Перенаправляем stdout/stderr, чтобы подавить ошибку gio в WSL
-            old_stdout = sys.stdout
-            old_stderr = sys.stderr
-            sys.stdout = open(os.devnull, 'w')
-            sys.stderr = open(os.devnull, 'w')
-            try:
-                webbrowser.open("http://127.0.0.1:8000")
-            finally:
-                sys.stdout = old_stdout
-                sys.stderr = old_stderr
+            webbrowser.open("http://127.0.0.1:8000")
         except Exception as e:
             print(f"⚠️ Не удалось открыть браузер: {e}. Откройте вручную http://127.0.0.1:8000")
 

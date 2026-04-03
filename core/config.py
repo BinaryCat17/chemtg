@@ -7,13 +7,15 @@ load_dotenv(override=True)
 
 # ================== НАСТРОЙКИ ==================
 TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
-LLM_MODEL = os.getenv("LLM_MODEL", "gemini-3.1-pro-customtools")
+LLM_MODEL = os.getenv("LLM_MODEL", "gemini-3.1-flash-lite")
 
 # Определение базовой директории конфигурации
 if os.path.exists("/app/config"):
     CONFIG_DIR = Path("/app/config")
-elif os.environ.get('APP_EXE_DIR'):
+elif os.environ.get('APP_EXE_DIR') and os.path.exists(os.path.join(os.environ['APP_EXE_DIR'], "config")):
     CONFIG_DIR = Path(os.environ['APP_EXE_DIR']) / "config"
+elif os.environ.get('APP_EXE_DIR') and os.path.exists(os.path.join(os.environ['APP_EXE_DIR'], "core", "config")):
+    CONFIG_DIR = Path(os.environ['APP_EXE_DIR']) / "core" / "config"
 else:
     CONFIG_DIR = Path(__file__).parent / "config"
 

@@ -34,6 +34,8 @@ class RegistryAgent:
         # Если мы не в Докере, сбрасываем адрес прокси-сервера
         if not self.api_base or "litellm:4000" in self.api_base:
             self.api_base = None
+        # Загружаем промпты из файлов, если это еще не было сделано
+        config.load_prompts()
         self.system_prompt = prompts.get_system_prompt()
         self.session_id = session_id
         
@@ -231,7 +233,8 @@ class RegistryAgent:
                             
                         elif tool == "answer-chat":
                             final_answer = call_data.get("answer") or call_data.get('"answer"')
-                            if not final_answer: raise ValueError("Missing 'answer' parameter.")
+                            if final_answer is None: # it might be an empty string, so check for None
+                                raise ValueError("Missing 'answer' parameter.")
                             break
                         else:
                             err_msg = f"Unknown tool '{tool}'."
