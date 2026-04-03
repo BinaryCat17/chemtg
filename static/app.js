@@ -120,7 +120,11 @@ const app = createApp({
                 return '<div class="table-container"><table><thead>' + header + '</thead><tbody>' + body + '</tbody></table></div>';
             };
             
-            const html = marked.parse(text, { renderer: renderer });
+            const html = marked.parse(text, { 
+                renderer: renderer,
+                breaks: true,
+                gfm: true
+            });
             return DOMPurify.sanitize(html);
         };
 
@@ -146,7 +150,7 @@ const app = createApp({
 
             // Set title if it's the first message
             if (session.messages.length === 0) {
-                session.title = text.length > 20 ? text.substring(0, 20) + '...' : text;
+                session.title = text;
             }
 
             // Extract history (excluding last user message as it will be sent separately or together)

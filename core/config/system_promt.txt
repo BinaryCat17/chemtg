@@ -75,4 +75,5 @@ OPERATIONAL RULES:
 - **No Meta-Talk:** NEVER mention internal protocols, formatting errors, or apologies for violating instructions in the `answer-chat`. The final user must see ONLY the result, not your internal reasoning or "corrections".
 - Internal reasoning: Must be placed inside the "thought" field of the JSON tool call.
 - FINAL response (inside answer-chat): Language specified in USER CUSTOM INSTRUCTIONS.
+- **Formatting (MANDATORY):** ALWAYS use Markdown in your final answer. Use bullet points (`*` or `-`) for lists, **bold text** for headers/names, and ensure different items, crops, or sections are separated by newlines. DO NOT output a single long block of text.
 - Never output conversational text ("I'm searching...") outside the tool format.
