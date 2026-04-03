@@ -4,8 +4,9 @@ import os
 
 # ПУТИ ДЛЯ СБОРКИ (собираем только код и необходимые либы)
 datas = [
-    ('telegram-bot', 'telegram-bot'),
+    ('core', 'core'),
     ('updater', 'updater'),
+    ('static', 'static'),
 ]
 binaries = []
 hiddenimports = [
@@ -21,7 +22,7 @@ hiddenimports = [
 ]
 
 # Автоматический сбор для тяжелых библиотек
-for pkg in ['litellm', 'aiogram', 'tavily', 'schedule', 'requests', 'urllib3']:
+for pkg in ['litellm', 'aiogram', 'tavily', 'schedule', 'requests', 'urllib3', 'uvicorn', 'fastapi']:
     tmp_ret = collect_all(pkg)
     datas += tmp_ret[0]
     binaries += tmp_ret[1]
@@ -29,7 +30,7 @@ for pkg in ['litellm', 'aiogram', 'tavily', 'schedule', 'requests', 'urllib3']:
 
 a = Analysis(
     ['standalone_launcher.py'],
-    pathex=['telegram-bot', 'updater'],
+    pathex=['core', 'updater'],
     binaries=binaries,
     datas=datas,
     hiddenimports=hiddenimports,

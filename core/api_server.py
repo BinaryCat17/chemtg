@@ -23,10 +23,12 @@ is_system_ready = False
 skip_vpn_check = False
 
 # Mount static folder
-bundle_dir = os.environ.get("APP_EXE_DIR", os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if getattr(sys, 'frozen', False):
+    bundle_dir = sys._MEIPASS
+else:
+    bundle_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 static_dir = os.path.join(bundle_dir, "static")
-if not os.path.exists(static_dir):
-    static_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static")
 
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 

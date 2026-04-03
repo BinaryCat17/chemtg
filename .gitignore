@@ -18,7 +18,6 @@ venv_linux/
 .pytest_cache/
 
 # Project Binaries and Data
-bin/
 data/
 reestr.db
 
