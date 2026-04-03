@@ -28,7 +28,7 @@ def download_and_extract(url, target_name):
     xml_path = os.path.join(DATA_DIR, target_name + '.xml')
     print(f"📥 Скачиваю {target_name}...")
     try:
-        r = requests.get(url, headers=headers, stream=True, timeout=180)
+        r = requests.get(url, headers=headers, stream=True, timeout=180, proxies={"http": None, "https": None})
         r.raise_for_status()
         with open(zip_path, 'wb') as f:
             for chunk in r.iter_content(8192): f.write(chunk)

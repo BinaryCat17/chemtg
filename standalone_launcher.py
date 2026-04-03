@@ -41,20 +41,20 @@ os.environ['APP_EXE_DIR'] = exe_dir
 for folder in [os.path.join(exe_dir, "data", "vpn"), os.path.join(exe_dir, "bin")]:
     os.makedirs(folder, exist_ok=True)
 
-sys.path.append(os.path.join(bundle_dir, "telegram-bot"))
+sys.path.append(os.path.join(bundle_dir, "core"))
 sys.path.append(os.path.join(bundle_dir, "updater"))
 
 try:
-    import main
+    import api_server
     import import_reestr
 except ImportError:
-    sys.path.append(os.path.join(os.getcwd(), "telegram-bot"))
+    sys.path.append(os.path.join(os.getcwd(), "core"))
     sys.path.append(os.path.join(os.getcwd(), "updater"))
-    import main
+    import api_server
     import import_reestr
 
 env_path = os.path.join(exe_dir, ".env")
-load_dotenv(env_path if os.path.exists(env_path) else None)
+load_dotenv(env_path if os.path.exists(env_path) else None, override=True)
 
 def parse_vless(link):
     if not link or not link.startswith("vless://"): return None
@@ -80,8 +80,16 @@ def parse_vless(link):
 
 def generate_xray_config(p):
     if not p: return False
+    # Гарантируем наличие папок
+    vpn_dir = os.path.join(exe_dir, "data", "vpn")
+    os.makedirs(vpn_dir, exist_ok=True)
+
     config = {
-        "log": {"loglevel": "warning"},
+        "log": {
+            "loglevel": "debug",
+            "access": os.path.join(vpn_dir, "access.log"),
+            "error": os.path.join(vpn_dir, "error.log")
+        },
         "inbounds": [{
             "port": 20171,
             "listen": "127.0.0.1",
@@ -142,7 +150,7 @@ def generate_xray_config(p):
 
 def fetch_subscription():
     sub_url = os.getenv("VPN_SUBSCRIPTION_URL")
-    if not sub_url: return None
+    if not sub_url: return []
     try:
         # Используем проверенную заглушку
         headers = {
@@ -151,7 +159,7 @@ def fetch_subscription():
         }
         r = requests.get(sub_url, headers=headers, timeout=15)
         r.encoding = 'utf-8'
-        if r.status_code != 200: return None
+        if r.status_code != 200: return []
         
         content = r.text.strip()
         try:
@@ -160,27 +168,45 @@ def fetch_subscription():
         except:
             decoded_body = content
             
-        links = [line.strip() for line in decoded_body.splitlines() if line.strip().startswith("vless://")]
+        links = []
+        for line in decoded_body.splitlines():
+            line = line.strip()
+            if not line: continue
+            if line.startswith("vless://"):
+                links.append(line)
+            else:
+                try:
+                    padded_line = line + "=" * ((4 - len(line) % 4) % 4)
+                    dec = base64.b64decode(padded_line).decode('utf-8').strip()
+                    if dec.startswith("vless://"):
+                        links.append(dec)
+                except:
+                    pass
         
-        # 1. Сначала ищем Нидерланды (с декодированием URL)
+        if not links:
+            return []
+            
+        # Сортируем: Нидерланды -> Германия -> Остальные
+        nl_links = []
+        de_links = []
+        other_links = []
+        
         for line in links:
             decoded_line = unquote(line).lower()
             if "нидерланды" in decoded_line or "nl." in decoded_line:
-                print(f"🇳🇱 Выбран сервер: {unquote(line.split('#')[-1]) if '#' in line else 'Netherlands'}")
-                return line
-        
-        # 2. Потом Германию
-        for line in links:
-            decoded_line = unquote(line).lower()
-            if "германия" in decoded_line or "de." in decoded_line:
-                print(f"🇩🇪 Выбран сервер: {unquote(line.split('#')[-1]) if '#' in line else 'Germany'}")
-                return line
-        
-        return links[0] if links else None
+                nl_links.append(line)
+            elif "германия" in decoded_line or "de." in decoded_line:
+                de_links.append(line)
+            else:
+                other_links.append(line)
+                
+        return nl_links + de_links + other_links
             
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         print(f"❌ Ошибка подписки: {e}")
-    return None
+    return []
 
 def test_proxy():
     print("⏳ Проверка VPN соединения (Gemini API)...")
@@ -205,28 +231,40 @@ def start_vpn():
         if not os.path.exists(os.path.join(exe_dir, "bin", f)):
             print(f"⚠️ Файл {f} не найден в папке bin. Xray может не работать.")
 
-    link = fetch_subscription()
-    if not link:
+    links = fetch_subscription()
+    if not links:
         print("❌ Не удалось получить ссылку из подписки.")
         return False
         
-    p = parse_vless(link)
-    if p and generate_xray_config(p):
-        flags = 0x08000000 if os.name == 'nt' else 0
-        subprocess.Popen(
-            [xray_exe, "-c", os.path.join(exe_dir, "data", "vpn", "config.json")], 
-            creationflags=flags, 
-            stdout=subprocess.DEVNULL, 
-            stderr=subprocess.DEVNULL,
-            cwd=os.path.join(exe_dir, "bin")
-        )
+    for link in links:
+        p = parse_vless(link)
+        if not p or not p.get("address") or p["address"] == "0.0.0.0": continue
         
-        time.sleep(5)
-        if test_proxy():
-            os.environ['HTTP_PROXY'] = "http://127.0.0.1:20171"
-            os.environ['HTTPS_PROXY'] = "http://127.0.0.1:20171"
-            os.environ['ALL_PROXY'] = "http://127.0.0.1:20171"
-            return True
+        server_name = unquote(link.split('#')[-1]) if '#' in link else p["address"]
+        print(f"🔄 Пробуем подключиться к VPN серверу: {server_name}")
+        
+        if generate_xray_config(p):
+            flags = 0x08000000 if os.name == 'nt' else 0
+            xray_proc = subprocess.Popen(
+                [xray_exe, "-c", os.path.join(exe_dir, "data", "vpn", "config.json")], 
+                creationflags=flags, 
+                stdout=subprocess.DEVNULL, 
+                stderr=subprocess.DEVNULL,
+                cwd=os.path.join(exe_dir, "bin")
+            )
+            
+            time.sleep(3)
+            if test_proxy():
+                os.environ['HTTP_PROXY'] = "http://127.0.0.1:20171"
+                os.environ['HTTPS_PROXY'] = "http://127.0.0.1:20171"
+                os.environ['ALL_PROXY'] = "http://127.0.0.1:20171"
+                return True
+            else:
+                print(f"❌ Сервер {server_name} недоступен. Пробуем следующий...")
+                xray_proc.terminate()
+                time.sleep(1)
+                
+    print("❌ Ни один из серверов подписки не заработал.")
     return False
 
 def check_database():
@@ -241,7 +279,7 @@ def scheduler_worker():
         time.sleep(60)
 
 if __name__ == "__main__":
-    print("=== Standalone ChemTG Bot (v1.0.2 - 2026-03-17) ===")
+    print("=== Standalone ChemTG Bot (v2.0.0 - Web UI) ===")
     check_database()
     threading.Thread(target=scheduler_worker, daemon=True).start()
     
@@ -249,8 +287,39 @@ if __name__ == "__main__":
     if not vpn_ok:
         print("⚠️ ВНИМАНИЕ: Бот запущен БЕЗ работающего VPN.")
     
+    def open_browser():
+        time.sleep(2)
+        import webbrowser
+        try:
+            print("🌐 Открываю браузер: http://127.0.0.1:8000")
+            # Перенаправляем stdout/stderr, чтобы подавить ошибку gio в WSL
+            old_stdout = sys.stdout
+            old_stderr = sys.stderr
+            sys.stdout = open(os.devnull, 'w')
+            sys.stderr = open(os.devnull, 'w')
+            try:
+                webbrowser.open("http://127.0.0.1:8000")
+            finally:
+                sys.stdout = old_stdout
+                sys.stderr = old_stderr
+        except Exception as e:
+            print(f"⚠️ Не удалось открыть браузер: {e}. Откройте вручную http://127.0.0.1:8000")
+
+    threading.Thread(target=open_browser, daemon=True).start()
+    
     try:
-        asyncio.run(main.main())
+        api_server.main()
+    except KeyboardInterrupt:
+        sys.exit(0)
+    except Exception as e:
+        print(f"💥 Критическая ошибка: {e}")
+        input("Нажмите Enter...")
+
+
+    threading.Thread(target=open_browser, daemon=True).start()
+    
+    try:
+        api_server.main()
     except KeyboardInterrupt:
         sys.exit(0)
     except Exception as e:
