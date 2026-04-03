@@ -89,10 +89,16 @@
         .message.assistant { background-color: var(--msg-bot-bg); color: var(--msg-bot-text); border: 1px solid var(--msg-border); align-self: flex-start; border-bottom-left-radius: 4px; width: 100%; max-width: 90%; }
         
         /* Стили для Markdown вывода */
-        .markdown-body p, .markdown-body ul, .markdown-body ol { margin-bottom: 0.5rem; }
+        .markdown-body p, .markdown-body ul, .markdown-body ol { margin-bottom: 1rem; }
         .markdown-body p:last-child, .markdown-body ul:last-child, .markdown-body ol:last-child { margin-bottom: 0; }
         .markdown-body li { margin-bottom: 0.25rem; }
-        .markdown-body h3 { margin-top: 1rem; margin-bottom: 0.5rem; font-size: 1.1rem; }
+        /* Делаем списки компактными внутри */
+        .markdown-body ul, .markdown-body ol { margin-bottom: 1.5rem; }
+        .markdown-body li ul, .markdown-body li ol { margin-top: 0.25rem; margin-bottom: 0; }
+        /* Сближаем название культуры (p) и список её характеристики (ul) */
+        .markdown-body p + ul, .markdown-body p + ol { margin-top: -0.75rem; }
+        
+        .markdown-body h3 { margin-top: 1.5rem; margin-bottom: 0.75rem; font-size: 1.15rem; color: #0f172a; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.25rem; }
         .markdown-body code { font-size: 0.85em; background: #f1f5f9; padding: 0.1rem 0.3rem; border-radius: 4px; }
 
         .table-container { overflow-x: auto; margin: 1rem 0; border-radius: 8px; border: 1px solid var(--table-border); width: 100%; background: white; }
@@ -147,10 +153,11 @@
         .app-detail-label { font-size: 0.65rem; color: #64748b; font-weight: 700; text-transform: uppercase; }
         .app-detail-value { font-size: 0.85rem; color: #1e293b; line-height: 1.3; }
 
-        #startup-modal article { max-width: 500px; }
-        .startup-log-container { background: #1e293b; color: #10b981; padding: 0.75rem; border-radius: 8px; font-family: monospace; font-size: 0.8rem; height: 160px; overflow-y: auto; margin-top: 0.5rem; }
-        .startup-log-entry { margin-bottom: 0.2rem; }
-        .spinner { width: 16px; height: 16px; border: 2px solid #cbd5e1; border-top-color: #0ea5e9; border-radius: 50%; animation: spin 1s linear infinite; }
+        #startup-modal article { max-width: 800px; width: 100%; }
+        .startup-log-container { background: #1e293b; color: #10b981; padding: 1rem; border-radius: 8px; font-family: monospace; font-size: 0.85rem; height: 350px; overflow-y: auto; margin-top: 0.5rem; border: 1px solid #334155; }
+        .startup-log-entry { margin-bottom: 0.3rem; border-left: 2px solid #334155; padding-left: 0.75rem; }
+        .loading-indicator { display: flex; align-items: center; gap: 0.75rem; font-weight: 600; color: #64748b; line-height: 1; }
+        .spinner { width: 20px; height: 20px; border: 3px solid #cbd5e1; border-top-color: #0ea5e9; border-radius: 50%; animation: spin 1s linear infinite; flex-shrink: 0; }
         @keyframes spin { to { transform: rotate(360deg); } }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -240,7 +247,7 @@
             </div>
         </div>
 
-        <dialog id="startup-modal" :open="isStarting"><article><header><strong>Загрузка...</strong></header><div class="startup-log-container"><div v-for="(log, i) in startupLogs" :key="i" class="startup-log-entry">{{ log }}</div></div><div class="loading-indicator" style="justify-content: center; width: 100%;"><div class="spinner"></div><span>Инициализация...</span></div></article></dialog>
+        <dialog id="startup-modal" :open="isStarting"><article><header><strong>Загрузка...</strong></header><div class="startup-log-container" ref="startupLogContainer"><div v-for="(log, i) in startupLogs" :key="i" class="startup-log-entry">{{ log }}</div></div><div style="padding-top: 1rem; display: flex; justify-content: center;"><div class="loading-indicator"><div class="spinner"></div><span>Инициализация...</span></div></div></article></dialog>
 
         <dialog :open="!!selectedProduct" @click="handleModalClick">
             <article v-if="selectedProduct" class="product-modal-content">

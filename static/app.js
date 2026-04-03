@@ -12,6 +12,15 @@ const app = createApp({
         const viewMode = ref('chat'); // 'chat' or 'browser'
         const isStarting = ref(true);
         const startupLogs = ref([]);
+        const startupLogContainer = ref(null);
+
+        // Watch startupLogs to auto-scroll to bottom
+        watch(startupLogs, async () => {
+            await nextTick();
+            if (startupLogContainer.value) {
+                startupLogContainer.value.scrollTop = startupLogContainer.value.scrollHeight;
+            }
+        }, { deep: true });
 
         // Browser State
         const browserType = ref('pesticides');
@@ -292,7 +301,7 @@ const app = createApp({
 
         return {
             sessions, activeSessionId, activeSession, currentInput, isLoading, messagesContainer,
-            viewMode, isStarting, startupLogs, browserType, browserSearch, browserSearchField, browserPage, browserData, selectedProduct,
+            viewMode, isStarting, startupLogs, startupLogContainer, browserType, browserSearch, browserSearchField, browserPage, browserData, selectedProduct,
             dbStatus, vpnStatus, isUpdating, onlyActive,
             createNewSession, deleteSession, sendMessage, renderMarkdown, 
             adjustTextareaHeight, updateDatabase,
