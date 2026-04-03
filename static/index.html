@@ -192,10 +192,18 @@
             </div>
 
             <div v-if="viewMode === 'browser'" id="browser-container">
-                <h1>Просмотр реестра</h1>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <h1 style="margin: 0;">Просмотр реестра</h1>
+                    <div class="pagination" style="margin: 0;">
+                        <button :disabled="browserPage === 1" @click="fetchBrowserData(browserPage - 1)" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;">←</button>
+                        <span style="font-size: 0.85rem; white-space: nowrap; font-weight: 600; min-width: 60px; text-align: center;">{{ browserPage }} / {{ Math.ceil(browserData.total / 50) || 1 }}</span>
+                        <button :disabled="browserPage >= Math.ceil(browserData.total / 50)" @click="fetchBrowserData(browserPage + 1)" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;">→</button>
+                    </div>
+                </div>
                 <div class="browser-controls">
                     <div class="filter-group"><label>Тип:</label><select v-model="browserType" @change="fetchBrowserData(1)"><option value="pesticides">Пестициды</option><option value="agrochemicals">Агрохимикаты</option></select></div>
                     <div class="filter-group"><label>Где:</label><select v-model="browserSearchField"><option value="all">Везде</option><option value="name">Название</option><option value="dv" v-if="browserType === 'pesticides'">ДВ</option><option value="crop">Культура</option><option value="reg_number">№ Рег.</option></select></div>
+                    <div class="filter-group"><label style="display: flex; align-items: center; gap: 0.3rem; cursor: pointer;"><input type="checkbox" v-model="onlyActive" @change="fetchBrowserData(1)" style="margin: 0; width: 16px; height: 16px;">Статус</label></div>
                     <input type="text" v-model="browserSearch" @input="debouncedSearch" placeholder="Поиск...">
                 </div>
                 <div class="table-container" style="flex:1; margin:0; background: white; overflow: auto;">
@@ -222,11 +230,6 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="pagination">
-                    <button :disabled="browserPage === 1" @click="fetchBrowserData(browserPage - 1)">←</button>
-                    <span>{{ browserPage }} / {{ Math.ceil(browserData.total / 50) || 1 }}</span>
-                    <button :disabled="browserPage >= Math.ceil(browserData.total / 50)" @click="fetchBrowserData(browserPage + 1)">→</button>
-                </div>
             </div>
         </div>
 
@@ -249,11 +252,19 @@
                     <div v-for="(app, idx) in selectedProduct.applications" :key="idx" class="app-item">
                         <div class="app-kultura">{{ app.kultura || app.Kultura }}</div>
                         <div class="app-details">
-                            <div class="app-detail-row"><span class="app-detail-label">Вредный объект</span><span class="app-detail-value">{{ app.vrednyy_obekt || app.Vrednyy_obekt_naznachenie || '-' }}</span></div>
-                            <div class="app-detail-row"><span class="app-detail-label">Норма расхода / Доза</span><span class="app-detail-value">{{ app.norma || app.doza || app.Norma_primeneniya || app.Doza_primeneniya || '-' }}</span></div>
-                            <div class="app-detail-row"><span class="app-detail-label">Способ / Время обработки</span><span class="app-detail-value">{{ app.sposob || app.vremya || app.Sposob_i_vremya_obrabotki || '-' }}</span></div>
-                            <div class="app-detail-row"><span class="app-detail-label">Срок ожидания (кратность)</span><span class="app-detail-value">{{ app.srok_ozhidaniya || app.Srok_ozhidaniya_kratnost_obrabotok || '-' }}</span></div>
-                            <div class="app-detail-row"><span class="app-detail-label">Срок выхода (ручн./мех.)</span><span class="app-detail-value">{{ app.vyhod || app.Sroki_vyhoda_dlya_ruchnyh_mehanizirovannyh_rabot || '-' }}</span></div>
+                            <template v-if="selectedProduct.type === 'pesticide'">
+                                <div class="app-detail-row"><span class="app-detail-label">Вредный объект</span><span class="app-detail-value">{{ app.vrednyy_obekt || app.Vrednyy_obekt_naznachenie || '-' }}</span></div>
+                                <div class="app-detail-row"><span class="app-detail-label">Норма расхода / Доза</span><span class="app-detail-value">{{ app.norma || app.doza || app.Norma_primeneniya || app.Doza_primeneniya || '-' }}</span></div>
+                                <div class="app-detail-row"><span class="app-detail-label">Способ / Время обработки</span><span class="app-detail-value">{{ app.sposob || app.vremya || app.Sposob_i_vremya_obrabotki || '-' }}</span></div>
+                                <div class="app-detail-row"><span class="app-detail-label">Срок ожидания (кратность)</span><span class="app-detail-value">{{ app.srok_ozhidaniya || app.Srok_ozhidaniya_kratnost_obrabotok || '-' }}</span></div>
+                                <div class="app-detail-row"><span class="app-detail-label">Срок выхода (ручн./мех.)</span><span class="app-detail-value">{{ app.vyhod || app.Sroki_vyhoda_dlya_ruchnyh_mehanizirovannyh_rabot || '-' }}</span></div>
+                            </template>
+                            <template v-else>
+                                <div class="app-detail-row"><span class="app-detail-label">Марка / Вид</span><span class="app-detail-value">{{ app.marka || '-' }}</span></div>
+                                <div class="app-detail-row"><span class="app-detail-label">Доза применения</span><span class="app-detail-value">{{ app.doza || app.Doza_primeneniya || '-' }}</span></div>
+                                <div class="app-detail-row"><span class="app-detail-label">Время и способ применения</span><span class="app-detail-value">{{ app.vremya || app.Vremya_primeneniya || '-' }}</span></div>
+                                <div class="app-detail-row"><span class="app-detail-label">Область применения</span><span class="app-detail-value">{{ app.oblast || '-' }}</span></div>
+                            </template>
                             <div v-if="app.osobennosti || app.Osobennosti_primeneniya" class="app-detail-row"><span class="app-detail-label">Особенности применения</span><span class="app-detail-value">{{ app.osobennosti || app.Osobennosti_primeneniya }}</span></div>
                         </div>
                     </div>

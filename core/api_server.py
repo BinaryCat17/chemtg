@@ -84,11 +84,14 @@ async def update_db():
     return {"status": "started"}
 
 @app.get("/api/products/pesticides")
-async def get_pesticides(page: int = 1, limit: int = 50, q: str = "", field: str = "all"):
+async def get_pesticides(page: int = 1, limit: int = 50, q: str = "", field: str = "all", active: bool = False):
     db = Database()
     offset = (page - 1) * limit
     conditions = []
     join_clause = ""
+    
+    if active:
+        conditions.append("p.status = 'Действует'")
     
     if q:
         if field == "name": conditions.append(f"p.naimenovanie REGEXP '{q}'")
@@ -114,11 +117,15 @@ async def get_pesticides(page: int = 1, limit: int = 50, q: str = "", field: str
     return {"items": items, "total": total_res[0]['total'] if total_res else 0}
 
 @app.get("/api/products/agrochemicals")
-async def get_agrochemicals(page: int = 1, limit: int = 50, q: str = "", field: str = "all"):
+async def get_agrochemicals(page: int = 1, limit: int = 50, q: str = "", field: str = "all", active: bool = False):
     db = Database()
     offset = (page - 1) * limit
     conditions = []
     join_clause = ""
+    
+    if active:
+        conditions.append("a.status = 'Действует'")
+        
     if q:
         if field == "name": conditions.append(f"a.preparat REGEXP '{q}'")
         elif field == "reg_number": conditions.append(f"a.rn REGEXP '{q}'")

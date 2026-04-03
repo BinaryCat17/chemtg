@@ -17,6 +17,7 @@ const app = createApp({
         const browserType = ref('pesticides');
         const browserSearch = ref('');
         const browserSearchField = ref('all');
+        const onlyActive = ref(true);
         const browserPage = ref(1);
         const browserData = ref({ items: [], total: 0 });
         let searchTimeout = null;
