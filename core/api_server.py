@@ -87,21 +87,43 @@ async def update_db():
     return {"status": "started"}
 
 @app.get("/api/products/pesticides")
-async def get_pesticides(page: int = 1, limit: int = 50, q: str = ""):
+async def get_pesticides(page: int = 1, limit: int = 50, q: str = "", field: str = "all"):
     db = Database()
     offset = (page - 1) * limit
-    # Явно указываем алиас p. для колонок в WHERE
-    where = f"WHERE (p.naimenovanie REGEXP '{q}' OR p.deystvuyushchee_veshchestvo REGEXP '{q}')" if q else "WHERE 1=1"
+    
+    conditions = []
+    join_clause = ""
+    
+    if q:
+        if field == "name":
+            conditions.append(f"p.naimenovanie REGEXP '{q}'")
+        elif field == "dv":
+            # Умный поиск по JSON для ДВ
+            conditions.append(f"EXISTS (SELECT 1 FROM json_each(p.deystvuyushchee_veshchestvo) WHERE value->>'veshchestvo' REGEXP '{q}')")
+        elif field == "reg_number":
+            conditions.append(f"p.nomer_reg REGEXP '{q}'")
+        elif field == "crop":
+            join_clause = "JOIN pestitsidy_primeneniya pp ON p.nomer_reg = pp.nomer_reg"
+            conditions.append(f"pp.kultura REGEXP '{q}'")
+        else: # all
+            join_clause = "LEFT JOIN pestitsidy_primeneniya pp ON p.nomer_reg = pp.nomer_reg"
+            conditions.append(f"(p.naimenovanie REGEXP '{q}' OR p.nomer_reg REGEXP '{q}' OR pp.kultura REGEXP '{q}' OR EXISTS (SELECT 1 FROM json_each(p.deystvuyushchee_veshchestvo) WHERE value->>'veshchestvo' REGEXP '{q}'))")
+
+    where = "WHERE " + " AND ".join(conditions) if conditions else ""
     
     query = f"""
-        SELECT p.*, COALESCE(pop.score, 0) as popularity 
+        SELECT DISTINCT p.nomer_reg, p.naimenovanie, p.preparativnaya_forma, p.deystvuyushchee_veshchestvo, 
+                        p.registrant, p.klass_opasnosti, p.data_reg, p.srok_reg, p.status,
+                        COALESCE(pop.score, 0) as popularity 
         FROM pestitsidy p 
+        {join_clause}
         LEFT JOIN product_popularity pop ON p.naimenovanie = pop.naimenovanie 
         {where} 
         ORDER BY popularity DESC, p.naimenovanie ASC 
         LIMIT {limit} OFFSET {offset}
     """
-    count_query = f"SELECT COUNT(*) as total FROM pestitsidy p {where}"
+    
+    count_query = f"SELECT COUNT(DISTINCT p.nomer_reg) as total FROM pestitsidy p {join_clause} {where}"
     
     items = db.execute_query(query)
     total_res = db.execute_query(count_query)
@@ -110,20 +132,38 @@ async def get_pesticides(page: int = 1, limit: int = 50, q: str = ""):
     return {"items": items, "total": total}
 
 @app.get("/api/products/agrochemicals")
-async def get_agrochemicals(page: int = 1, limit: int = 50, q: str = ""):
+async def get_agrochemicals(page: int = 1, limit: int = 50, q: str = "", field: str = "all"):
     db = Database()
     offset = (page - 1) * limit
-    where = f"WHERE (a.preparat REGEXP '{q}')" if q else "WHERE 1=1"
+    
+    conditions = []
+    join_clause = ""
+    
+    if q:
+        if field == "name":
+            conditions.append(f"a.preparat REGEXP '{q}'")
+        elif field == "reg_number":
+            conditions.append(f"a.rn REGEXP '{q}'")
+        elif field == "crop":
+            join_clause = "JOIN agrokhimikaty_primeneniya ap ON a.rn = ap.rn"
+            conditions.append(f"ap.kultura REGEXP '{q}'")
+        else: # all or dv (not applicable for agro)
+            join_clause = "LEFT JOIN agrokhimikaty_primeneniya ap ON a.rn = ap.rn"
+            conditions.append(f"(a.preparat REGEXP '{q}' OR a.rn REGEXP '{q}' OR ap.kultura REGEXP '{q}')")
+
+    where = "WHERE " + " AND ".join(conditions) if conditions else ""
     
     query = f"""
-        SELECT a.*, COALESCE(pop.score, 0) as popularity 
+        SELECT DISTINCT a.rn, a.preparat, a.registrant, a.data_reg, a.srok_reg, a.status, a.group_name,
+                        COALESCE(pop.score, 0) as popularity 
         FROM agrokhimikaty a 
+        {join_clause}
         LEFT JOIN agrokhimikaty_popularity pop ON a.preparat = pop.preparat 
         {where} 
         ORDER BY popularity DESC, a.preparat ASC 
         LIMIT {limit} OFFSET {offset}
     """
-    count_query = f"SELECT COUNT(*) as total FROM agrokhimikaty a {where}"
+    count_query = f"SELECT COUNT(DISTINCT a.rn) as total FROM agrokhimikaty a {join_clause} {where}"
     
     items = db.execute_query(query)
     total_res = db.execute_query(count_query)

@@ -137,7 +137,7 @@ def import_pest(xml_path):
             (nomer_reg, naimenovanie, preparativnaya_forma, deystvuyushchee_veshchestvo, registrant, klass_opasnosti, data_reg, srok_reg, status)
             VALUES (?,?,?,?,?,?,?,?,?);""",
             (nomer, item.findtext('Naimenovanie/item'), item.findtext('Preparativnaya_forma/item'),
-             json.dumps(dv), item.findtext('Registrant/item'), item.findtext('Klass_opasnosti/item'),
+             json.dumps(dv, ensure_ascii=False), item.findtext('Registrant/item'), item.findtext('Klass_opasnosti/item'),
              item.findtext('Data_gosudarstvennoy_registracii/item'), item.findtext('Srok_registracii_Po/item'),
              item.findtext('Status_gosudarstvennoy_registracii/item')))
 

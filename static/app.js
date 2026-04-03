@@ -14,6 +14,7 @@ const app = createApp({
         // Browser State
         const browserType = ref('pesticides');
         const browserSearch = ref('');
+        const browserSearchField = ref('all');
         const browserPage = ref(1);
         const browserData = ref({ items: [], total: 0 });
         let searchTimeout = null;
@@ -152,7 +153,7 @@ const app = createApp({
         // Browser Logic
         const fetchBrowserData = async (page = 1) => {
             browserPage.value = page;
-            const url = `/api/products/${browserType.value}?page=${page}&q=${encodeURIComponent(browserSearch.value)}`;
+            const url = `/api/products/${browserType.value}?page=${page}&q=${encodeURIComponent(browserSearch.value)}&field=${browserSearchField.value}`;
             try {
                 const response = await fetch(url);
                 if (response.ok) {
@@ -171,10 +172,7 @@ const app = createApp({
         const openProductCard = async (item) => {
             const type = browserType.value === 'pesticides' ? 'pesticide' : 'agrochemical';
             const id = item.nomer_reg || item.Nomer_reg || item.rn || item.Rn;
-            if (!id) {
-                console.error("Could not find ID for item", item);
-                return;
-            }
+            if (!id) return;
             try {
                 const response = await fetch(`/api/product/${type}/${id}`);
                 if (response.ok) {
@@ -191,7 +189,6 @@ const app = createApp({
         // Chat Link Handler
         const handleChatClick = (e) => {
             const target = e.target;
-            // Если кликнули по ячейке таблицы или жирному тексту, пробуем найти это как препарат
             if (target.tagName === 'TD' || target.tagName === 'STRONG' || target.tagName === 'B') {
                 const text = target.innerText.trim();
                 if (text.length > 3) {
@@ -201,19 +198,17 @@ const app = createApp({
         };
 
         const searchAndOpen = async (name) => {
-            // Пробуем найти сначала в пестицидах
             try {
-                const r1 = await fetch(`/api/products/pesticides?limit=1&q=${encodeURIComponent(name)}`);
+                const r1 = await fetch(`/api/products/pesticides?limit=1&q=${encodeURIComponent(name)}&field=name`);
                 const d1 = await r1.json();
                 if (d1.items.length > 0) {
-                    openProductCardSpecific('pesticide', d1.items[0].nomer_reg);
+                    openProductCardSpecific('pesticide', d1.items[0].nomer_reg || d1.items[0].Nomer_reg);
                     return;
                 }
-                // Если не нашли, пробуем агрохимикаты
-                const r2 = await fetch(`/api/products/agrochemicals?limit=1&q=${encodeURIComponent(name)}`);
+                const r2 = await fetch(`/api/products/agrochemicals?limit=1&q=${encodeURIComponent(name)}&field=name`);
                 const d2 = await r2.json();
                 if (d2.items.length > 0) {
-                    openProductCardSpecific('agrochemical', d2.items[0].rn);
+                    openProductCardSpecific('agrochemical', d2.items[0].rn || d2.items[0].Rn);
                     return;
                 }
             } catch (e) { console.error(e); }
@@ -292,7 +287,7 @@ const app = createApp({
             scrollToBottom();
             loadStatus();
             setInterval(loadStatus, 30000);
-            fetchBrowserData(); // Предзагрузка
+            fetchBrowserData(); 
         });
 
         watch(activeSessionId, () => {
@@ -301,7 +296,7 @@ const app = createApp({
 
         return {
             sessions, activeSessionId, activeSession, currentInput, isLoading, messagesContainer,
-            viewMode, browserType, browserSearch, browserPage, browserData, selectedProduct,
+            viewMode, browserType, browserSearch, browserSearchField, browserPage, browserData, selectedProduct,
             dbStatus, vpnStatus, isUpdating,
             createNewSession, deleteSession, sendMessage, renderMarkdown, 
             adjustTextareaHeight, updateDatabase,
