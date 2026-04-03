@@ -170,7 +170,11 @@ const app = createApp({
 
         const openProductCard = async (item) => {
             const type = browserType.value === 'pesticides' ? 'pesticide' : 'agrochemical';
-            const id = item.nomer_reg || item.rn;
+            const id = item.nomer_reg || item.Nomer_reg || item.rn || item.Rn;
+            if (!id) {
+                console.error("Could not find ID for item", item);
+                return;
+            }
             try {
                 const response = await fetch(`/api/product/${type}/${id}`);
                 if (response.ok) {
@@ -178,6 +182,10 @@ const app = createApp({
                     selectedProduct.value = { type, ...data };
                 }
             } catch (e) { console.error(e); }
+        };
+
+        const getItemKey = (item) => {
+            return item.nomer_reg || item.Nomer_reg || item.rn || item.Rn || Math.random();
         };
 
         // Chat Link Handler
@@ -297,7 +305,8 @@ const app = createApp({
             dbStatus, vpnStatus, isUpdating,
             createNewSession, deleteSession, sendMessage, renderMarkdown, 
             adjustTextareaHeight, updateDatabase,
-            fetchBrowserData, debouncedSearch, openProductCard, formatDV, handleChatClick
+            fetchBrowserData, debouncedSearch, openProductCard, formatDV, handleChatClick,
+            getItemKey
         };
     }
 });

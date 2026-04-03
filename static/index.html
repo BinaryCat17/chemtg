@@ -39,7 +39,10 @@
         }
         
         #sidebar {
-            width: 300px; /* Немного шире для длинных названий */
+            width: 300px;
+            min-width: 300px;
+            max-width: 300px;
+            flex-shrink: 0;
             background-color: var(--sidebar-bg);
             border-right: 1px solid var(--sidebar-border);
             display: flex;
@@ -112,7 +115,7 @@
             justify-content: space-between;
             align-items: center;
             gap: 0.5rem;
-            min-height: 40px;
+            min-height: 44px;
         }
         .session-title {
             flex: 1;
@@ -139,6 +142,7 @@
             height: 28px;
             flex-shrink: 0;
         }
+        .delete-btn svg { display: block; }
         .session-item:hover .delete-btn { opacity: 1; }
         .delete-btn:hover { background-color: #fee2e2; color: #ef4444; }
 
@@ -256,12 +260,15 @@
             border-radius: 8px;
             border: 1px solid var(--table-border);
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            width: 100%;
+            background: white;
         }
         table {
             width: 100%;
             border-collapse: collapse;
             margin: 0;
             font-size: 0.9rem;
+            min-width: 1000px; /* Достаточно места для всех колонок */
         }
         th, td { 
             border: none;
@@ -581,18 +588,18 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="item in browserData.items" :key="item.nomer_reg || item.rn" @click="openProductCard(item)">
+                        <tr v-for="item in browserData.items" :key="getItemKey(item)" @click="openProductCard(item)" style="cursor:pointer;">
                             <template v-if="browserType === 'pesticides'">
-                                <td class="clickable-product">{{ item.naimenovanie }}</td>
-                                <td>{{ formatDV(item.deystvuyushchee_veshchestvo) }}</td>
-                                <td>{{ item.registrant }}</td>
-                                <td>{{ item.srok_reg }}</td>
+                                <td class="clickable-product">{{ item.naimenovanie || item.Naimenovanie || '-' }}</td>
+                                <td>{{ formatDV(item.deystvuyushchee_veshchestvo || item.Deystvuyushchee_veshchestvo) }}</td>
+                                <td>{{ item.registrant || item.Registrant || '-' }}</td>
+                                <td>{{ item.srok_reg || item.Srok_reg || '-' }}</td>
                             </template>
                             <template v-else>
-                                <td class="clickable-product">{{ item.preparat }}</td>
-                                <td>{{ item.registrant }}</td>
-                                <td>{{ item.group_name }}</td>
-                                <td>{{ item.srok_reg }}</td>
+                                <td class="clickable-product">{{ item.preparat || item.Preparat || '-' }}</td>
+                                <td>{{ item.registrant || item.Registrant || '-' }}</td>
+                                <td>{{ item.group_name || item.Group_name || '-' }}</td>
+                                <td>{{ item.srok_reg || item.Srok_reg || '-' }}</td>
                             </template>
                         </tr>
                     </tbody>

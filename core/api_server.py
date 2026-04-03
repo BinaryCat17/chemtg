@@ -90,17 +90,18 @@ async def update_db():
 async def get_pesticides(page: int = 1, limit: int = 50, q: str = ""):
     db = Database()
     offset = (page - 1) * limit
-    where = f"WHERE (naimenovanie REGEXP '{q}' OR deystvuyushchee_veshchestvo REGEXP '{q}')" if q else "WHERE 1=1"
+    # Явно указываем алиас p. для колонок в WHERE
+    where = f"WHERE (p.naimenovanie REGEXP '{q}' OR p.deystvuyushchee_veshchestvo REGEXP '{q}')" if q else "WHERE 1=1"
     
     query = f"""
         SELECT p.*, COALESCE(pop.score, 0) as popularity 
         FROM pestitsidy p 
         LEFT JOIN product_popularity pop ON p.naimenovanie = pop.naimenovanie 
         {where} 
-        ORDER BY popularity DESC, naimenovanie ASC 
+        ORDER BY popularity DESC, p.naimenovanie ASC 
         LIMIT {limit} OFFSET {offset}
     """
-    count_query = f"SELECT COUNT(*) as total FROM pestitsidy {where}"
+    count_query = f"SELECT COUNT(*) as total FROM pestitsidy p {where}"
     
     items = db.execute_query(query)
     total_res = db.execute_query(count_query)
@@ -112,17 +113,17 @@ async def get_pesticides(page: int = 1, limit: int = 50, q: str = ""):
 async def get_agrochemicals(page: int = 1, limit: int = 50, q: str = ""):
     db = Database()
     offset = (page - 1) * limit
-    where = f"WHERE (preparat REGEXP '{q}')" if q else "WHERE 1=1"
+    where = f"WHERE (a.preparat REGEXP '{q}')" if q else "WHERE 1=1"
     
     query = f"""
         SELECT a.*, COALESCE(pop.score, 0) as popularity 
         FROM agrokhimikaty a 
         LEFT JOIN agrokhimikaty_popularity pop ON a.preparat = pop.preparat 
         {where} 
-        ORDER BY popularity DESC, preparat ASC 
+        ORDER BY popularity DESC, a.preparat ASC 
         LIMIT {limit} OFFSET {offset}
     """
-    count_query = f"SELECT COUNT(*) as total FROM agrokhimikaty {where}"
+    count_query = f"SELECT COUNT(*) as total FROM agrokhimikaty a {where}"
     
     items = db.execute_query(query)
     total_res = db.execute_query(count_query)
